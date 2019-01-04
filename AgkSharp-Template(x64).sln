@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgkSharp-Template(x64)", "AgkSharp-Template(x64).csproj", "{3D74B415-143B-4F59-899B-668F0284BEAD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug-64|Any CPU = Debug-64|Any CPU
+		Release-64|Any CPU = Release-64|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3D74B415-143B-4F59-899B-668F0284BEAD}.Debug-64|Any CPU.ActiveCfg = Debug-64|Any CPU
+		{3D74B415-143B-4F59-899B-668F0284BEAD}.Debug-64|Any CPU.Build.0 = Debug-64|Any CPU
+		{3D74B415-143B-4F59-899B-668F0284BEAD}.Release-64|Any CPU.ActiveCfg = Release-64|Any CPU
+		{3D74B415-143B-4F59-899B-668F0284BEAD}.Release-64|Any CPU.Build.0 = Release-64|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C40B6694-226A-4BA1-B471-A8ECD5E90EDD}
+	EndGlobalSection
+EndGlobal
