@@ -470,7 +470,7 @@ namespace AGKCore
             Agk.UseNewDefaultFonts(1);
 
             //init log
-            System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp      | File            | Level | Channel    | Log" + Environment.NewLine);
+            System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File            | Level | Channel    | Log" + Environment.NewLine);
             System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
 
             App.Status.IsRunning = true;
