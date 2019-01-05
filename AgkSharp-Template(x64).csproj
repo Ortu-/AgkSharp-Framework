@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>WinExe</OutputType>
     <RootNamespace>AgkSharp_Template</RootNamespace>
-    <AssemblyName>CSharp-TemplateSimple</AssemblyName>
+    <AssemblyName>Application</AssemblyName>
     <ProjectGuid>{3D74B415-143B-4F59-899B-668F0284BEAD}</ProjectGuid>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -23,6 +23,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-64|AnyCPU'">
     <OutputPath>bin\</OutputPath>
@@ -38,6 +40,7 @@
     <OutputPath>bin\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AgkSharp64, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">

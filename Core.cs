@@ -14,10 +14,10 @@ namespace AGKCore
     {
         static Form m_Window;
         static bool m_bMaximized = false;
-        static bool m_bBreakLoop = false;
         public static bool DisableEscape { get; set; } = false;
 
         public static AppConfig Config;
+        public static AppStatus Status;
 
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool GetKeyboardState(byte[] lpKeyState);
@@ -270,7 +270,7 @@ namespace AGKCore
 
         static void Core_OnClose(object sender, EventArgs e)
         {
-            m_bBreakLoop = true;
+            App.Status.IsRunning = false;
         }
 
         static void Core_OnMouseMove(object sender, MouseEventArgs e)
@@ -349,7 +349,7 @@ namespace AGKCore
             PassKeyDown((uint)e.KeyValue);
 
             if (!DisableEscape && e.KeyValue == 27)
-                m_bBreakLoop = true;
+                App.Status.IsRunning = false;
 
             Char chr = TranslateKeyToUnicode(e.KeyCode);
             Agk.CharDown(chr);
@@ -367,7 +367,7 @@ namespace AGKCore
             if (window.Handle != null)
                 Agk.InitGL(window.Handle);
 
-            return !m_bBreakLoop;
+            return true;
         }
 
         public static bool InitAGK()
@@ -375,7 +375,7 @@ namespace AGKCore
             if (m_Window.Handle != null)
                 Agk.InitGL(m_Window.Handle);
 
-            return !m_bBreakLoop;
+            return true;
         }
 
         public static bool LoopAGK()
@@ -385,7 +385,7 @@ namespace AGKCore
             if (Agk.IsCapturingImage() > 0)
                 System.Threading.Thread.Sleep(10);
 
-            return !m_bBreakLoop;
+            return App.Status.IsRunning;
         }
 
         public static void CleanUp()
@@ -393,10 +393,16 @@ namespace AGKCore
             Agk.CleanUp();
         }
 
-        public static void Init(string[] args, string title)
+        public static bool Init(string[] args, string title)
         {
+            App.Status.LoadState = 1;
+            App.Status.LoadStage = 1;
+
             //config defaults
-            App.Config.LogLevel = 3;
+            App.Config.Log.Level = 3;
+            App.Config.Log.File = System.AppDomain.CurrentDomain.BaseDirectory + "app.log";
+            App.Config.Log.Channels = "*";
+
             App.Config.Screen.Fullscreen = true;
             App.Config.Screen.Width = 0;
             App.Config.Screen.Height = 0;
@@ -411,7 +417,7 @@ namespace AGKCore
                     case "sh": App.Config.Screen.Height = Convert.ToInt32(arg.Split('=').Last()); break;
                     case "fs": App.Config.Screen.Fullscreen = Convert.ToBoolean(arg.Split('=').Last()); break;
                     case "vsync": App.Config.Screen.Vsync = Convert.ToBoolean(arg.Split('=').Last()); break;
-                    case "log": App.Config.LogLevel = Convert.ToInt32(arg.Split('=').Last()); break;
+                    case "log": App.Config.Log.Level = Convert.ToInt32(arg.Split('=').Last()); break;
                     default: break;
                 }
             }
@@ -427,11 +433,19 @@ namespace AGKCore
             App.Config.Screen.CenterX = (int)Math.Floor(App.Config.Screen.Width * 0.5);
             App.Config.Screen.CenterY = (int)Math.Floor(App.Config.Screen.Height * 0.5);
 
+            if (App.Config.Screen.Width > 1280)
+            {
+                App.Config.Screen.Layout = 1;
+            }
+            else {
+                App.Config.Screen.Layout = 2;
+            }
+
             App.CreateWindow(title, App.Config.Screen.Width, App.Config.Screen.Height, App.Config.Screen.Fullscreen);
 
             if (!App.InitAGK())
             {
-                return;
+                return false;
             }
 
             Agk.SetResolutionMode(1);
@@ -454,13 +468,32 @@ namespace AGKCore
             Agk.SetPrintColor(255, 255, 255);
             Agk.SetClearColor(0, 0, 0);
             Agk.UseNewDefaultFonts(1);
+
+            //init log
+            System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp      | File            | Level | Channel    | Log" + Environment.NewLine);
+            System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
+
+            App.Status.IsRunning = true;
+
+            return true;
+        }
+
+        public static void Log(string rSource, int rLevel, string rChannel, string rContent)
+        {
+            if(rLevel >= App.Config.Log.Level)
+            {
+                if(App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
+                {
+                    System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(15) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
+                }
+            }
         }
 
     }
 
     public struct AppConfig
     {
-        public int LogLevel;
+        public LogConfig Log;
         public ScreenConfig Screen;
     }
 
@@ -478,4 +511,20 @@ namespace AGKCore
         public bool Fullscreen;
         public bool Vsync;
     }
+
+    public struct LogConfig
+    {
+        public int Level;
+        public string Channels;
+        public string File;
+    }
+
+    public struct AppStatus
+    {
+        public bool IsRunning;
+        public int LoadState; //0 not loaded | 1 loading | 2 title loop (UI only) | 3 level load finished | 4 game in progress | 5 level reload/transition
+        public int LoadStage; //0 init resources | 1 transition in | 2 body | 3 transition out
+        public int LoadType; //0 not loading | 1 title load | 2 level load	
+    }
+
 }

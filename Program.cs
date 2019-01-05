@@ -3,6 +3,7 @@ using AgkSharp;
 using AGKCore;
 using System.Reflection;
 using System.Linq;
+using System.Drawing;
 
 namespace AgkSharp_Template
 {
@@ -13,7 +14,14 @@ namespace AgkSharp_Template
         {
             var attrs = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false).FirstOrDefault() as AssemblyTitleAttribute;
 
-            App.Init(args, attrs.Title);
+            if(!App.Init(args, attrs.Title))
+            {
+                return;
+            }
+
+#if DEBUG
+            App.Log("Program.cs", 3, "main", "> Init Complete");
+#endif
 
             // display a background and center it
             uint bgImg = Agk.CreateSprite(Agk.LoadImage("media/background.jpg"));
@@ -32,9 +40,12 @@ namespace AgkSharp_Template
 
             // play the sprite at 10 fps, looping, going from frame 1 to 5
             Agk.PlaySprite(1, 10.0f, 1, 1, 5);
-
+           
             while (App.LoopAGK())
             {
+#if DEBUG
+                App.Log("Program.cs", 1, "main", "--- Begin main loop ---");
+#endif
                 Agk.Sync();
             }
 
