@@ -4,6 +4,7 @@ using AGKCore;
 using System.Reflection;
 using System.Linq;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace AgkSharp_Template
 {
@@ -46,6 +47,16 @@ namespace AgkSharp_Template
 #if DEBUG
                 App.Log("Program.cs", 1, "main", "--- Begin main loop ---");
 #endif
+
+                Agk.Print(Agk.ScreenFPS());
+
+                Agk.Print("A is down: " + Data.GetBit(1, Hardware.Input[(int)System.Windows.Forms.Keys.A]));
+                Agk.Print("A was down: " + Data.GetBit(2, Hardware.Input[(int)System.Windows.Forms.Keys.A]));
+
+                Agk.Print("Left mouse is down: " + Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
+                Agk.Print("Left mouse was down: " + Data.GetBit(2, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
+                
+
                 Agk.Sync();
             }
 

@@ -10,7 +10,7 @@ using AgkSharp;
 
 namespace AGKCore
 {
-    public class App
+    public static class App
     {
         static Form m_Window;
         static bool m_bMaximized = false;
@@ -51,18 +51,19 @@ namespace AGKCore
             if (System.IO.File.Exists("icon.ico"))
                 m_Window.Icon = new Icon("icon.ico");
 
-            m_Window.MouseDown += Core_OnMouseDown;
-            m_Window.MouseUp += Core_OnMouseUp;
-            m_Window.MouseWheel += Core_OnMouseWheel;
-            m_Window.MouseMove += Core_OnMouseMove;
+            m_Window.MouseDown += Hardware.OnMouseDown;
+            m_Window.MouseUp += Hardware.OnMouseUp;
+            m_Window.MouseWheel += Hardware.OnMouseWheel;
+            m_Window.MouseMove += Hardware.OnMouseMove;
+            m_Window.KeyDown += Hardware.OnKeyDown;
+            m_Window.KeyUp += Hardware.OnKeyUp;
+
             m_Window.SizeChanged += Core_OnSizeChanged;
             m_Window.Move += Core_OnMove;
             m_Window.Activated += Core_OnActivated;
             m_Window.Deactivate += Core_OnDeactivate;
             m_Window.GotFocus += Core_OnGotFocus;
             m_Window.LostFocus += Core_OnLostFocus;
-            m_Window.KeyDown += Core_OnKeyDown;
-            m_Window.KeyUp += Core_OnKeyUp;
             m_Window.FormClosing += Core_OnClose;
 
             m_Window.Show();
@@ -70,231 +71,9 @@ namespace AGKCore
             return m_Window;
         }
 
-        static void PassKeyDown(uint key)
-        {
-            switch (key)
-            {
-                // Top Row 0-9
-                case 48:
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 53:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    Agk.KeyDown(key + 215);
-                    break;
-
-                // Num pad 0-9
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                case 100:
-                case 101:
-                case 102:
-                case 103:
-                case 104:
-                case 105:
-                    Agk.KeyDown(key - 48);
-                    break;
-
-                case 16:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift))
-                        Agk.KeyDown(257);
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightShift))
-                        Agk.KeyDown(258);
-                    break;
-
-                case 17:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl))
-                        Agk.KeyDown(259);
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightCtrl))
-                        Agk.KeyDown(260);
-                    break;
-
-                case 18:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftAlt))
-                        Agk.KeyDown(261);
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightAlt))
-                        Agk.KeyDown(262);
-                    break;
-            }
-
-            if (key > 0 && key < 512)
-                Agk.KeyDown(key);
-        }
-
-        static void PassKeyUp(uint key)
-        {
-            switch (key)
-            {
-                // Top Row 0-9
-                case 48:
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 53:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    Agk.KeyUp(key + 215);
-                    break;
-
-                // Num pad 0-9
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                case 100:
-                case 101:
-                case 102:
-                case 103:
-                case 104:
-                case 105:
-                    Agk.KeyUp(key - 48);
-                    break;
-
-                case 16:
-                    if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.LeftShift))
-                        Agk.KeyUp(257);
-                    else if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.RightShift))
-                        Agk.KeyUp(258);
-                    break;
-
-                case 17:
-                    if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.LeftCtrl))
-                        Agk.KeyUp(259);
-                    else if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.RightCtrl))
-                        Agk.KeyUp(260);
-                    break;
-
-                case 18:
-                    if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.LeftAlt))
-                        Agk.KeyUp(261);
-                    else if (System.Windows.Input.Keyboard.IsKeyUp(System.Windows.Input.Key.RightAlt))
-                        Agk.KeyUp(262);
-                    break;
-            }
-
-            if (key > 0 && key < 512)
-                Agk.KeyUp(key);
-        }
-
-        static int TranslateKey(int key)
-        {
-            switch (key)
-            {
-                // Top Row 0-9
-                case 48:
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 53:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    key += 215;
-                    break;
-
-                // Num pad 0-9
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                case 100:
-                case 101:
-                case 102:
-                case 103:
-                case 104:
-                case 105:
-                    key -= 48;
-                    break;
-
-                case 16:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift))
-                        key = 257;
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightShift))
-                        key = 258;
-                    break;
-
-                case 17:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl))
-                        key = 259;
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightCtrl))
-                        key = 260;
-                    break;
-
-                case 18:
-                    if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftAlt))
-                        key = 261;
-                    else if (System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.RightAlt))
-                        key = 262;
-                    break;
-            }
-
-            return key;
-        }
-
-        static Char TranslateKeyToUnicode(Keys key)
-        {
-            Char result = new Char();
-
-            byte[] keyboardState = new byte[255];
-            bool keyboardStateStatus = GetKeyboardState(keyboardState);
-
-            if (!keyboardStateStatus)
-            {
-                return result;
-            }
-
-            uint virtualKeyCode = (uint)key;
-            uint scanCode = MapVirtualKey(virtualKeyCode, 0);
-            IntPtr inputLocaleIdentifier = GetKeyboardLayout(0);
-
-            StringBuilder txt = new StringBuilder();
-            ToUnicodeEx(virtualKeyCode, scanCode, keyboardState, txt, (int)5, (uint)0, inputLocaleIdentifier);
-            if (txt.Length > 0)
-                result = txt[0];
-
-            return result;
-
-        }
-
         static void Core_OnClose(object sender, EventArgs e)
         {
             App.Status.IsRunning = false;
-        }
-
-        static void Core_OnMouseMove(object sender, MouseEventArgs e)
-        {
-            Agk.MouseMove(0, e.X, e.Y);
-        }
-
-        static void Core_OnMouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left) Agk.MouseLeftButton(0, 1);
-            if (e.Button == MouseButtons.Right) Agk.MouseRightButton(0, 1);
-            if (e.Button == MouseButtons.Middle) Agk.MouseMiddleButton(0, 1);
-        }
-
-        static void Core_OnMouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left) Agk.MouseLeftButton(0, 0);
-            if (e.Button == MouseButtons.Right) Agk.MouseRightButton(0, 0);
-            if (e.Button == MouseButtons.Middle) Agk.MouseMiddleButton(0, 0);
-        }
-
-        static void Core_OnMouseWheel(object sender, MouseEventArgs e)
-        {
-            Agk.MouseWheel(0, (float)e.Delta / 40);
         }
 
         static void Core_OnSizeChanged(object sender, EventArgs e)
@@ -342,24 +121,6 @@ namespace AGKCore
         static void Core_OnLostFocus(object sender, EventArgs e)
         {
             Agk.WindowMoved();
-        }
-
-        static void Core_OnKeyDown(object sender, KeyEventArgs e)
-        {
-            PassKeyDown((uint)e.KeyValue);
-
-            if (!DisableEscape && e.KeyValue == 27)
-                App.Status.IsRunning = false;
-
-            Char chr = TranslateKeyToUnicode(e.KeyCode);
-            Agk.CharDown(chr);
-
-            e.Handled = true;
-        }
-
-        static void Core_OnKeyUp(object sender, KeyEventArgs e)
-        {
-            PassKeyUp((uint)e.KeyValue);
         }
 
         public static bool InitAGK(Form window)
@@ -525,6 +286,7 @@ namespace AGKCore
         public int LoadState; //0 not loaded | 1 loading | 2 title loop (UI only) | 3 level load finished | 4 game in progress | 5 level reload/transition
         public int LoadStage; //0 init resources | 1 transition in | 2 body | 3 transition out
         public int LoadType; //0 not loading | 1 title load | 2 level load	
+
     }
 
 }
