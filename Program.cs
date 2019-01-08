@@ -6,6 +6,7 @@ using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 
+
 namespace AgkSharp_Template
 {
     static class Program
@@ -41,7 +42,10 @@ namespace AgkSharp_Template
 
             // play the sprite at 10 fps, looping, going from frame 1 to 5
             Agk.PlaySprite(1, 10.0f, 1, 1, 5);
-           
+
+            Scheduler.SetInterval(App.DoStuff, "Showing popup", 3, 3000, 5000, null);
+            Scheduler.SetInterval(App.DoStuff, "Showing alternate", 3, 3000, 5500, null);
+
             while (App.LoopAGK())
             {
 #if DEBUG
@@ -55,7 +59,6 @@ namespace AgkSharp_Template
 
                 Agk.Print("Left mouse is down: " + Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
                 Agk.Print("Left mouse was down: " + Data.GetBit(2, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
-                
 
                 Agk.Sync();
             }
@@ -64,4 +67,5 @@ namespace AgkSharp_Template
         }
 
     }
+
 }

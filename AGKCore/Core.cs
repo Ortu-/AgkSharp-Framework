@@ -6,7 +6,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.CSharp;
+using System.CodeDom.Compiler;
+using System.Text;
 using AgkSharp;
+using static AGKCore.Scheduler;
+using System.Reflection;
 
 namespace AGKCore
 {
@@ -248,6 +253,14 @@ namespace AGKCore
                     System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(15) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
                 }
             }
+        }
+
+        public static void DoStuff(object sender)
+        {
+            TimerState ts = (TimerState)sender;
+            var i = Scheduled.IndexOf(ts);
+            Console.WriteLine("    did stuff " + ts.DoneTicks.ToString());
+            MessageBox.Show(Scheduled[i].Args + " #" + Scheduled[i].DoneTicks.ToString());
         }
 
     }
