@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
@@ -14,6 +15,7 @@ namespace AGKCore
             TimerState ts = new TimerState
             {
                 Callback = rCallback,
+                Name = rCallback.GetMethodInfo().DeclaringType.Name + "." + rCallback.GetMethodInfo().Name,
                 Args = rArgs,
                 Target = rTarget,
                 MaxTicks = rTicks,
@@ -50,6 +52,7 @@ namespace AGKCore
         {
             public Timer Timer;
             public Delegate Callback;
+            public string Name;
             public string Args;
             public string Target;
             public int MaxTicks;

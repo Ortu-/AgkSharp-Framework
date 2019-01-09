@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.CSharp;
-using System.CodeDom.Compiler;
-using System.Text;
 using AgkSharp;
-using static AGKCore.Scheduler;
-using System.Reflection;
+using Newtonsoft.Json;
 
 namespace AGKCore
 {
@@ -161,6 +155,9 @@ namespace AGKCore
 
         public static bool Init(string[] args, string title)
         {
+            StaticInvoke.Add(App.Log);
+            StaticInvoke.Add(App.DoStuff);
+
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
 
@@ -254,13 +251,19 @@ namespace AGKCore
                 }
             }
         }
-
+        
+        public static void Log(object rArgs)
+        {
+            dynamic a = JsonConvert.DeserializeObject<dynamic>(rArgs.ToString());
+            Log(a.Source.ToString(), (int)a.Level, a.Channel.ToString(), a.Content.ToString());
+        }
+        
         public static void DoStuff(object sender)
         {
-            TimerState ts = (TimerState)sender;
-            var i = Scheduled.IndexOf(ts);
+            Scheduler.TimerState ts = (Scheduler.TimerState)sender;
+            var i = Scheduler.Scheduled.IndexOf(ts);
             Console.WriteLine("    did stuff " + ts.DoneTicks.ToString());
-            MessageBox.Show(Scheduled[i].Args + " #" + Scheduled[i].DoneTicks.ToString());
+            MessageBox.Show(Scheduler.Scheduled[i].Args + " #" + Scheduler.Scheduled[i].DoneTicks.ToString());
         }
 
     }
@@ -301,5 +304,13 @@ namespace AGKCore
         public int LoadType; //0 not loading | 1 title load | 2 level load	
 
     }
-
+    /*
+    public struct LogData
+    {
+        public string Source;
+        public int Level;
+        public string Channel;
+        public string Content;
+    }
+    */
 }
