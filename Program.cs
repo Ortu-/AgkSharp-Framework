@@ -6,6 +6,9 @@ using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace AgkSharp_Template
 {
@@ -43,18 +46,22 @@ namespace AgkSharp_Template
             // play the sprite at 10 fps, looping, going from frame 1 to 5
             Agk.PlaySprite(1, 10.0f, 1, 1, 5);
 
-            Scheduler.SetInterval(App.DoStuff, "Showing popup", 3, 3000, 5000, "blahblah");
-            Scheduler.SetInterval(App.DoStuff, "Showing alternate", 3, 3000, 5500, null);
+            App.AddKeyDownHandler();
 
-            StaticInvoke.Call("App.Log", "{Source:\"Program.cs\", Level:3, Channel:\"!\", Content:\"Hey! called this dynamically by name.\"}");
-            
+            Scheduler.SetInterval(App.DoStuff, null, 10, 3000, 3000, null);
+
             while (App.LoopAGK())
             {
 #if DEBUG
                 App.Log("Program.cs", 1, "main", "--- Begin main loop ---");
 #endif
+                //Always update timing, and do it first
+                App.UpdateTiming();
 
                 Agk.Print(Agk.ScreenFPS());
+                Agk.Print("Pause: " + App.Timing.PauseState.ToString());
+
+                Agk.Print("Press A to toggle pause");
 
                 Agk.Print("A is down: " + Data.GetBit(1, Hardware.Input[(int)System.Windows.Forms.Keys.A]));
                 Agk.Print("A was down: " + Data.GetBit(2, Hardware.Input[(int)System.Windows.Forms.Keys.A]));

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using AgkSharp;
 using Newtonsoft.Json;
@@ -17,6 +18,7 @@ namespace AGKCore
 
         public static AppConfig Config;
         public static AppStatus Status;
+        public static TimingStatus Timing;
 
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool GetKeyboardState(byte[] lpKeyState);
@@ -156,7 +158,6 @@ namespace AGKCore
         public static bool Init(string[] args, string title)
         {
             StaticInvoke.Add(App.Log);
-            StaticInvoke.Add(App.DoStuff);
 
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
@@ -241,6 +242,47 @@ namespace AGKCore
             return true;
         }
 
+        public static void UpdateTiming()
+        {
+            App.Timing.Timer = Agk.GetMilliseconds();
+            App.Timing.Delta = (uint)Agk.Abs(App.Timing.Timer - App.Timing.Delta);
+
+            int oldPause = App.Timing.PauseState;
+            if(App.Timing.PauseHold == 0)
+            {
+                App.Timing.PauseState = 0;
+            }
+            else
+            {
+                App.Timing.PauseState = 1;
+                if(oldPause == 0)
+                {
+                    App.Timing.PauseMark = App.Timing.Timer;
+                }
+                else
+                {
+                    App.Timing.PauseElapsed = (uint)Agk.Abs(App.Timing.Timer - App.Timing.PauseMark);
+                }
+            }
+
+            if(App.Timing.PauseState == 2)
+            {
+                //pause ended and elapsed time has been applied, clear down
+                App.Timing.PauseState = 0;
+                App.Timing.PauseMark = 0;
+                App.Timing.PauseElapsed = 0;
+            }
+
+            if(App.Timing.PauseState == 0 && oldPause == 1)
+            {
+                //pause ended, resume all updates but keep the elapsed time available for paused updates to adjust against elapsed times.
+                App.Timing.PauseState = 2;
+                Hardware.Mouse.MoveX = 0.0f;
+                Hardware.Mouse.MoveY = 0.0f;
+                Hardware.Mouse.MoveZ = 0.0f;
+            }
+        }
+
         public static void Log(string rSource, int rLevel, string rChannel, string rContent)
         {
             if(rLevel >= App.Config.Log.Level)
@@ -258,12 +300,22 @@ namespace AGKCore
             Log(a.Source.ToString(), (int)a.Level, a.Channel.ToString(), a.Content.ToString());
         }
         
-        public static void DoStuff(object sender)
+        public static void DoStuff(object rArgs)
         {
-            Scheduler.TimerState ts = (Scheduler.TimerState)sender;
-            var i = Scheduler.Scheduled.IndexOf(ts);
-            Console.WriteLine("    did stuff " + ts.DoneTicks.ToString());
-            MessageBox.Show(Scheduler.Scheduled[i].Args + " #" + Scheduler.Scheduled[i].DoneTicks.ToString());
+            MessageBox.Show("doing stuff");
+        }
+
+        public static void DoStuff2(object sender, KeyEventArgs e)
+        {
+            if(Data.GetBit(1, Hardware.Input[(int)Keys.A]) == 1)
+            {
+                App.Timing.PauseHold = Data.SetBit((int)TimingStatus.PauseType.Player, App.Timing.PauseHold, 1 - Data.GetBit((int)TimingStatus.PauseType.Player, App.Timing.PauseHold));
+            }
+        }
+
+        public static void AddKeyDownHandler()
+        {
+            m_Window.KeyDown += DoStuff2;
         }
 
     }
@@ -302,15 +354,24 @@ namespace AGKCore
         public int LoadState; //0 not loaded | 1 loading | 2 title loop (UI only) | 3 level load finished | 4 game in progress | 5 level reload/transition
         public int LoadStage; //0 init resources | 1 transition in | 2 body | 3 transition out
         public int LoadType; //0 not loading | 1 title load | 2 level load	
+    }
 
-    }
-    /*
-    public struct LogData
+    public struct TimingStatus
     {
-        public string Source;
-        public int Level;
-        public string Channel;
-        public string Content;
+        public uint Timer;
+        public uint Delta;
+        public uint UpdateMark;
+        public uint PauseMark;
+        public uint PauseElapsed;
+        public int PauseState;
+        public int PauseHold;
+        public enum PauseType
+        {
+            None,
+            System,
+            UI,
+            Player
+        }
     }
-    */
+
 }

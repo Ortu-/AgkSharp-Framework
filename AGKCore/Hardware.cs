@@ -65,6 +65,7 @@ namespace AGKCore
         
         public static void OnKeyDown(object sender, KeyEventArgs e)
         {
+            //Console.WriteLine(e.KeyValue.ToString());
             Input[e.KeyValue] = Data.SetBit(2, Input[e.KeyValue], Data.GetBit(1, Input[e.KeyValue]));
             Input[e.KeyValue] = Data.SetBit(1, Input[e.KeyValue], 1);
         }

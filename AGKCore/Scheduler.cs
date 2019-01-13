@@ -19,6 +19,7 @@ namespace AGKCore
                 Args = rArgs,
                 Target = rTarget,
                 MaxTicks = rTicks,
+                Interval = rInterval,
                 DoneTicks = 0
             };
 
@@ -29,9 +30,23 @@ namespace AGKCore
 
         public static void TickInterval(object sender)
         {
+            if(App.Timing.PauseState == 1)
+            {
+                return;
+            }
+
             TimerState ts = (TimerState)sender;
             var i = Scheduled.IndexOf(ts);
             ++Scheduled[i].DoneTicks;
+            ts.LastTick = App.Timing.Timer;
+
+            if (App.Timing.PauseState == 2)
+            {
+                if(App.Timing.Timer < ts.LastTick + ts.Interval + App.Timing.PauseElapsed)
+                {
+                    return;
+                }
+            }
 
             bool isDone = Scheduled[i].MaxTicks > -1 && Scheduled[i].DoneTicks >= Scheduled[i].MaxTicks;
             if (isDone)
@@ -57,6 +72,8 @@ namespace AGKCore
             public string Target;
             public int MaxTicks;
             public int DoneTicks;
+            public int Interval;
+            public uint LastTick;
         }
 
     }
