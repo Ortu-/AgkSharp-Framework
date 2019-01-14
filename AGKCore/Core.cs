@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -19,6 +20,7 @@ namespace AGKCore
         public static AppConfig Config;
         public static AppStatus Status;
         public static TimingStatus Timing;
+        public static List<UpdateHandler> UpdateList = new List<UpdateHandler>();
 
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool GetKeyboardState(byte[] lpKeyState);
@@ -237,8 +239,25 @@ namespace AGKCore
             System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File            | Level | Channel    | Log" + Environment.NewLine);
             System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
 
-            App.Status.IsRunning = true;
+            //temp
+            App.UpdateList.Add(new UpdateHandler("update1", null, false));
+            App.UpdateList.Add(new UpdateHandler("update2", "update1,update3", false));
+            App.UpdateList.Add(new UpdateHandler("update3", "update1", false));
+            App.UpdateList.Add(new UpdateHandler("update4", null, true));
+            //temp end
 
+            //finish up
+            UpdateHandler.SortUpdateList();
+
+            //temp
+            foreach(var u in App.UpdateList)
+            {
+                Console.WriteLine(u.FunctionName + " : " + u.Required);
+            }
+            App.UpdateList.Clear();
+            //temp end
+
+            App.Status.IsRunning = true;
             return true;
         }
 
@@ -372,6 +391,95 @@ namespace AGKCore
             UI,
             Player
         }
+    }
+
+    public class UpdateHandler
+    {
+        public bool IgnorePause;
+        public string FunctionName;
+        public string Required;
+
+        public UpdateHandler(string rName, string rRequired, bool rIgnore)
+        {
+            FunctionName = rName;
+            Required = rRequired;
+            IgnorePause = rIgnore;
+        }
+
+        public void Run()
+        {
+            var res = StaticInvoke.Call(this.FunctionName, null);
+        }
+
+        public static void AddRequiredToUpdate(string rName, string rRequired)
+        {
+            var tUpdate = App.UpdateList.FirstOrDefault(u => u.FunctionName == rName);
+            if (String.IsNullOrEmpty(tUpdate.Required))
+            {
+                tUpdate.Required = rRequired;
+            }
+            else
+            {
+                tUpdate.Required += "," + rRequired;
+            }
+        }
+
+        public static void SortUpdateList()
+        {
+#if DEBUG
+            App.Log("Core.cs", 2, "main", "Begin sorting update queue");
+#endif            
+            var updateQueue = new List<UpdateHandler>();
+            for (int i = App.UpdateList.Count - 1; i >= 0; i--)
+            {
+                if (String.IsNullOrEmpty(App.UpdateList[i].Required))
+                {
+#if DEBUG
+                    App.Log("Core.cs", 2, "main", "> moved " + App.UpdateList[i].FunctionName + " to queue");
+#endif
+                    updateQueue.Add(App.UpdateList[i]);
+                    App.UpdateList.RemoveAt(i);
+                }
+            }
+#if DEBUG
+            App.Log("Core.cs", 2, "main", "  finished updates without requirements. " + App.UpdateList.Count.ToString() + " remain");
+#endif
+            while (App.UpdateList.Count > 0)
+            {
+                for(int i = 0; i < App.UpdateList.Count; i++)
+                {
+                    var req = App.UpdateList[i].Required.Split(',');
+                    int okCount = 0;
+                    int reqCount = req.Length;
+                    foreach(var r in req)
+                    {
+                        foreach(var u in updateQueue)
+                        {
+                            if(u.FunctionName == r)
+                            {
+                                ++okCount;
+                            }
+                        }
+                    }
+
+                    if(okCount == reqCount)
+                    {
+#if DEBUG
+                        App.Log("Core.cs", 2, "main", "> moved " + App.UpdateList[i].FunctionName + " to queue");
+#endif
+                        updateQueue.Add(App.UpdateList[i]);
+                        App.UpdateList.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            App.UpdateList = new List<UpdateHandler>(updateQueue);
+#if DEBUG
+            App.Log("Core.cs", 2, "main", "End sorting update queue");
+#endif     
+        }
+
     }
 
 }

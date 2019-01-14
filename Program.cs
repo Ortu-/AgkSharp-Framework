@@ -46,10 +46,6 @@ namespace AgkSharp_Template
             // play the sprite at 10 fps, looping, going from frame 1 to 5
             Agk.PlaySprite(1, 10.0f, 1, 1, 5);
 
-            App.AddKeyDownHandler();
-
-            Scheduler.SetInterval(App.DoStuff, null, 10, 3000, 3000, null);
-
             while (App.LoopAGK())
             {
 #if DEBUG
@@ -57,6 +53,14 @@ namespace AgkSharp_Template
 #endif
                 //Always update timing, and do it first
                 App.UpdateTiming();
+
+                foreach(var u in App.UpdateList)
+                {
+                    if(App.Timing.PauseState != 1 || u.IgnorePause)
+                    {
+                        u.Run();
+                    }
+                }
 
                 Agk.Print(Agk.ScreenFPS());
                 Agk.Print("Pause: " + App.Timing.PauseState.ToString());
