@@ -239,23 +239,8 @@ namespace AGKCore
             System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File            | Level | Channel    | Log" + Environment.NewLine);
             System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
 
-            //temp
-            App.UpdateList.Add(new UpdateHandler("update1", null, false));
-            App.UpdateList.Add(new UpdateHandler("update2", "update1,update3", false));
-            App.UpdateList.Add(new UpdateHandler("update3", "update1", false));
-            App.UpdateList.Add(new UpdateHandler("update4", null, true));
-            //temp end
-
             //finish up
             UpdateHandler.SortUpdateList();
-
-            //temp
-            foreach(var u in App.UpdateList)
-            {
-                Console.WriteLine(u.FunctionName + " : " + u.Required);
-            }
-            App.UpdateList.Clear();
-            //temp end
 
             App.Status.IsRunning = true;
             return true;
@@ -317,6 +302,16 @@ namespace AGKCore
         {
             dynamic a = JsonConvert.DeserializeObject<dynamic>(rArgs.ToString());
             Log(a.Source.ToString(), (int)a.Level, a.Channel.ToString(), a.Content.ToString());
+        }
+
+        public static void StopRunning(bool rError)
+        {
+            App.Log("Core.cs", 255, "!", "Program end. Error: " + rError.ToString());
+            if (rError)
+            {
+                MessageBox.Show("The application has encountered an error.\r\nCheck the log for details.");
+            }
+            App.Status.IsRunning = false;
         }
         
         public static void DoStuff(object rArgs)

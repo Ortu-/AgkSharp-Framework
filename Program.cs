@@ -56,22 +56,21 @@ namespace AgkSharp_Template
 
                 foreach(var u in App.UpdateList)
                 {
+                    if (!App.Status.IsRunning)
+                    {
+                        break;
+                    }
                     if(App.Timing.PauseState != 1 || u.IgnorePause)
                     {
                         u.Run();
                     }
                 }
+                if (!App.Status.IsRunning)
+                {
+                    break;
+                }
 
                 Agk.Print(Agk.ScreenFPS());
-                Agk.Print("Pause: " + App.Timing.PauseState.ToString());
-
-                Agk.Print("Press A to toggle pause");
-
-                Agk.Print("A is down: " + Data.GetBit(1, Hardware.Input[(int)System.Windows.Forms.Keys.A]));
-                Agk.Print("A was down: " + Data.GetBit(2, Hardware.Input[(int)System.Windows.Forms.Keys.A]));
-
-                Agk.Print("Left mouse is down: " + Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
-                Agk.Print("Left mouse was down: " + Data.GetBit(2, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]));
 
                 Agk.Sync();
             }

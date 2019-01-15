@@ -61,6 +61,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AGKCore\Media.cs" />
     <Compile Include="AGKCore\StaticInvoke.cs" />
     <Compile Include="AGKCore\Scheduler.cs" />
     <Compile Include="AGKCore\Data.cs" />
