@@ -9,6 +9,7 @@ using System.Threading;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using UI = AGKCore.UI;
 
 namespace AgkSharp_Template
 {
@@ -45,6 +46,12 @@ namespace AgkSharp_Template
 
             // play the sprite at 10 fps, looping, going from frame 1 to 5
             Agk.PlaySprite(1, 10.0f, 1, 1, 5);
+
+
+            UI.Element tElement = new UI.Element();
+            tElement.Style.SetProp("Width", "100px");
+            MessageBox.Show(tElement.Style.Width + " : " + Data.GetBit((int)UI.FlowPropBit.Width, tElement.Style._FlowPropertyEnabled).ToString());
+
 
             while (App.LoopAGK())
             {
