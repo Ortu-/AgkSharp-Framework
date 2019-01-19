@@ -49,8 +49,9 @@ namespace AgkSharp_Template
 
 
             UI.Element tElement = new UI.Element();
-            tElement.Style.SetProp("Width", "100px");
-            MessageBox.Show(tElement.Style.Width + " : " + Data.GetBit((int)UI.FlowPropBit.Width, tElement.Style._FlowPropertyEnabled).ToString());
+            tElement.Style.SetProp("color", "#fff");
+            tElement.Style.SetProp("color", "#ffffff");
+            tElement.Style.SetProp("color", "#ffffffff");
 
 
             while (App.LoopAGK())

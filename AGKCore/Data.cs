@@ -1,4 +1,6 @@
-﻿using System;
+﻿using AgkSharp;
+using System;
+using System.Globalization;
 
 namespace AGKCore
 {
@@ -39,6 +41,62 @@ namespace AGKCore
                 rData = (rData & ~Convert.ToUInt32(1 << (rBit - 1)));
             }
             return rData;
+        }
+
+        public static uint ParseColor(string rValue)
+        {
+            string valR;
+            string valG;
+            string valB;
+            if(rValue[0] == '#')
+            {
+                if (rValue.Length == 4)
+                {
+                    //short form hex #000
+                    valR = rValue[1].ToString();
+                    valG = rValue[2].ToString();
+                    valB = rValue[3].ToString();
+                    return Agk.MakeColor(
+                                byte.Parse(valR + valR, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valG + valG, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valB + valB, NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                           );
+                }
+                else if(rValue.Length == 7)
+                {
+                    //rgb hex #000000
+                    valR = rValue.Substring(1, 2);
+                    valG = rValue.Substring(3, 2);
+                    valB = rValue.Substring(5, 2);
+                    return Agk.MakeColor(
+                                byte.Parse(valR, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valG, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valB, NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                           );
+                }
+                else
+                {
+                    //argb hex #00000000
+                    valR = rValue.Substring(3, 2);
+                    valG = rValue.Substring(5, 2);
+                    valB = rValue.Substring(7, 2);
+                    return Agk.MakeColor(
+                                byte.Parse(valR, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valG, NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                byte.Parse(valB, NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                           );
+                }
+            }
+            else if(rValue[0] == 'r')
+            {
+                rValue = rValue.Substring(4, rValue.Length - 4);
+                var c = rValue.Split(',');
+                {
+                    return Agk.MakeColor(Convert.ToUInt32(c[0]), Convert.ToUInt32(c[1]), Convert.ToUInt32(c[2]));
+                }
+            }
+
+            return 0;
         }
     }
 

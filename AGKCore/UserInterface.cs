@@ -1,6 +1,7 @@
 ﻿using AgkSharp;
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace AGKCore.UI
 {
@@ -11,6 +12,26 @@ namespace AGKCore.UI
         public static List<UI.TransitionData> TransitionList = new List<TransitionData>();
         public static List<UI.Element> ElementList = new List<Element>();
         public static List<UI.StyleClass> StyleClassList = new List<StyleClass>();
+
+        public static void ResetResolvedStyleProps()
+        {
+            ElementList[0].IsDirty = false; //skip root element
+            foreach(var e in ElementList)
+            {
+                //if parent is dirty, child also needs to be resolved
+                if (e.Parent.IsDirty)
+                {
+                    e.IsDirty = true;
+                }
+                if (e.IsDirty)
+                {
+                    e.ResolvedStyle = new StylePropertyData(e);
+                }
+            }
+
+            //root element is always = app window dimensions and provides context for all child %
+            ElementList[0].ResolvedStyle.ResolveAsScreen();
+        }
     }
 
     public class Element
@@ -20,8 +41,8 @@ namespace AGKCore.UI
         public string Tag;
         public Element Parent;
         public static List<UI.StyleClass> StyleClassList = new List<StyleClass>();
-        public StylePropertyData Style = new StylePropertyData();
-        public StylePropertyData ResolvedStyle = new StylePropertyData();
+        public StylePropertyData Style;
+        public StylePropertyData ResolvedStyle;
         public string Value;
         public int ScrollX;
         public int ScrollY;
@@ -31,15 +52,21 @@ namespace AGKCore.UI
         public string OnMouseOut;
         public bool MouseIsOver; //mouse curser is within element bounds?
         public bool PressIsHeld; //mouseclick or hotkey press is held down?
-        public uint KeyBind; //key id to act as hotkey to trigger onPress event
+        public int KeyBind = -1; //key id to act as hotkey to trigger onPress event
         public uint EnableEvents; //0 disabled | 1 enabled mouse | 2 enabled keybind | 3 enabled mouse and keybind | 4 enable drag and drop
         public uint EnableMove; //0-disabled | 1-freely drag around within parent bounds | 2-freely drag parent around within parent's parent bounds | 3-drag and drop from sockets
         public uint EnableSize; //grabbing an edge (2px?) or border will allow to resize the width/height
         public bool HoldPause; //gameplay is paused while element is visible
         public bool HoldMouseFocus; //gameplay ignores mouse input while element is visible
         public bool HoldKeyFocus; //gameplay ignores key input while element is visible
-        public int SelectedIndex;
-        public bool IsDirty;
+        public int SelectedIndex = -1;
+        public bool IsDirty = true;
+
+        public Element()
+        {
+            Style = new StylePropertyData(this);
+            ResolvedStyle = new StylePropertyData(this);
+        }
     }
 
     public class StyleClass
@@ -62,6 +89,8 @@ namespace AGKCore.UI
 
     public class StylePropertyData
     {
+        dynamic Owner;
+
         //Flow Props
         public string PositionAlignH { get; private set; } = "left";            //left|right|center
         public string PositionAlignV { get; private set; } = "top";             //top|bottom|center
@@ -118,12 +147,29 @@ namespace AGKCore.UI
         public int _InnerY { get; private set; }
         public int _InnerW { get; private set; }
         public int _InnerH { get; private set; }
-        public int _IsResolved { get; private set; }
+        public bool _IsResolved { get; private set; } = false;
         public uint _FlowPropertyEnabled { get; private set; }
         public uint _VisualPropertyEnabled { get; private set; }
 
+        public StylePropertyData(dynamic rObject)
+        {
+            Owner = rObject;
+        }
+
         public void SetProp(string rProp, string rValue)
         {
+            try
+            {
+                //styleClass owner won't have this.
+                Owner.IsDirty = true;
+            }
+            catch(Exception ex) { }
+
+            if (rProp.ToLower().Contains("color"))
+            {
+                rValue = Data.ParseColor(rValue).ToString();
+            }
+
             switch (rProp.ToLower())
             {
                 //Flow Props
@@ -355,6 +401,222 @@ namespace AGKCore.UI
                     _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.TextDecoration, _VisualPropertyEnabled, 1);
                     break;
             }
+
+        }
+
+        public void ResolveAsScreen()
+        {
+            Width = App.Config.Screen.Width.ToString();
+            Height = App.Config.Screen.Height.ToString();
+            _FinalW = App.Config.Screen.Width;
+            _FinalH = App.Config.Screen.Height;
+            _InnerW = App.Config.Screen.Width;
+            _InnerH = App.Config.Screen.Height;
+            _FinalX = 0;
+            _FinalY = 0;
+            _InnerX = 0;
+            _InnerY = 0;
+            _IsResolved = true;
+        }
+
+        public void ApplyInheritedStyleProps()
+        {
+            //this should be applied to element.ResolvedStyle
+            Display = Owner.ResolvedStyle.Display;
+            Opacity = Owner.ResolvedStyle.Opacity;
+            ZIndex = Owner.ResolvedStyle.ZIndex;
+            Cursor = Owner.ResolvedStyle.Cursor;
+            Color = Owner.ResolvedStyle.Color;
+            Font = Owner.ResolvedStyle.Font;
+            FontSize = Owner.ResolvedStyle.FontSize;
+            TextDecoration = Owner.ResolvedStyle.TextDecoration;
+            TextTransform = Owner.ResolvedStyle.TextTransform;
+            TextIndent = Owner.ResolvedStyle.TextIndent;
+            TextAlignH = Owner.ResolvedStyle.TextAlignH;
+            TextAlignV = Owner.ResolvedStyle.TextAlignV;
+            Rotation = Owner.ResolvedStyle.Rotation;
+        }
+
+        public void ApplyStyleProps(StylePropertyData rSource)
+        {
+            //this should be applied to element.ResolvedStyle
+            //Flow props
+            if (Data.GetBit((int)UI.FlowPropBit.PositionAlignH, rSource._FlowPropertyEnabled) == 1)
+            {
+                PositionAlignH = rSource.PositionAlignH;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.PositionAlignV, rSource._FlowPropertyEnabled) == 1)
+            {
+                PositionAlignV = rSource.PositionAlignV;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Position, rSource._FlowPropertyEnabled) == 1)
+            {
+                Position = rSource.Position;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Top, rSource._FlowPropertyEnabled) == 1)
+            {
+                Top = rSource.Top;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Left, rSource._FlowPropertyEnabled) == 1)
+            {
+                Left = rSource.Left;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.PaddingTop, rSource._FlowPropertyEnabled) == 1)
+            {
+                PaddingTop = rSource.PaddingTop;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.PaddingBottom, rSource._FlowPropertyEnabled) == 1)
+            {
+                PaddingBottom = rSource.PaddingBottom;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.PaddingLeft, rSource._FlowPropertyEnabled) == 1)
+            {
+                PaddingLeft = rSource.PaddingLeft;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.PaddingRight, rSource._FlowPropertyEnabled) == 1)
+            {
+                PaddingRight = rSource.PaddingRight;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Width, rSource._FlowPropertyEnabled) == 1)
+            {
+                Width = rSource.Width;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Height, rSource._FlowPropertyEnabled) == 1)
+            {
+                Height = rSource.Height;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.BorderTop, rSource._FlowPropertyEnabled) == 1)
+            {
+                BorderTop.Size = rSource.BorderTop.Size;
+                BorderTop.Color = rSource.BorderTop.Color;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.BorderBottom, rSource._FlowPropertyEnabled) == 1)
+            {
+                BorderBottom.Size = rSource.BorderBottom.Size;
+                BorderBottom.Color = rSource.BorderBottom.Color;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.BorderLeft, rSource._FlowPropertyEnabled) == 1)
+            {
+                BorderLeft.Size = rSource.BorderLeft.Size;
+                BorderLeft.Color = rSource.BorderLeft.Color;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.BorderRight, rSource._FlowPropertyEnabled) == 1)
+            {
+                BorderRight.Size = rSource.BorderRight.Size;
+                BorderRight.Color = rSource.BorderRight.Color;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MarginTop, rSource._FlowPropertyEnabled) == 1)
+            {
+                MarginTop = rSource.MarginTop;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MarginBottom, rSource._FlowPropertyEnabled) == 1)
+            {
+                MarginBottom = rSource.MarginBottom;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MarginLeft, rSource._FlowPropertyEnabled) == 1)
+            {
+                MarginLeft = rSource.MarginLeft;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MarginRight, rSource._FlowPropertyEnabled) == 1)
+            {
+                MarginRight = rSource.MarginRight;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MinWidth, rSource._FlowPropertyEnabled) == 1)
+            {
+                MinWidth = rSource.MinWidth;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Height, rSource._FlowPropertyEnabled) == 1)
+            {
+                MinHeight = rSource.MinHeight;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.MaxWidth, rSource._FlowPropertyEnabled) == 1)
+            {
+                MaxWidth = rSource.MaxWidth;
+            }
+            if (Data.GetBit((int)UI.FlowPropBit.Height, rSource._FlowPropertyEnabled) == 1)
+            {
+                MaxHeight = rSource.MaxHeight;
+            }
+
+            //Flow props
+            if (Data.GetBit((int)UI.VisualPropBit.BackgroundColor, rSource._VisualPropertyEnabled) == 1)
+            {
+                BackgroundColor = rSource.BackgroundColor;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.BackgroundOpacity, rSource._VisualPropertyEnabled) == 1)
+            {
+                BackgroundOpacity = rSource.BackgroundOpacity;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.BackgroundImage, rSource._VisualPropertyEnabled) == 1)
+            {
+                BackgroundImage = rSource.BackgroundImage;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.BackgroundRepeat, rSource._VisualPropertyEnabled) == 1)
+            {
+                BackgroundRepeat = rSource.BackgroundRepeat;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.BackgroundAlignH, rSource._VisualPropertyEnabled) == 1)
+            {
+                BackgroundAlignH = rSource.BackgroundAlignH;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Display, rSource._VisualPropertyEnabled) == 1)
+            {
+                Display = rSource.Display;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Opacity, rSource._VisualPropertyEnabled) == 1)
+            {
+                Opacity = rSource.Opacity;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.ZIndex, rSource._VisualPropertyEnabled) == 1)
+            {
+                ZIndex = rSource.ZIndex;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Cursor, rSource._VisualPropertyEnabled) == 1)
+            {
+                Cursor = rSource.Cursor;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Color, rSource._VisualPropertyEnabled) == 1)
+            {
+                Color = rSource.Color;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Font, rSource._VisualPropertyEnabled) == 1)
+            {
+                Font = rSource.Font;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.FontSize, rSource._VisualPropertyEnabled) == 1)
+            {
+                FontSize = rSource.FontSize;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.TextDecoration, rSource._VisualPropertyEnabled) == 1)
+            {
+                TextDecoration = rSource.TextDecoration;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.TextTransform, rSource._VisualPropertyEnabled) == 1)
+            {
+                TextTransform = rSource.TextTransform;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.TextIndent, rSource._VisualPropertyEnabled) == 1)
+            {
+                TextIndent = rSource.TextIndent;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.TextAlignH, rSource._VisualPropertyEnabled) == 1)
+            {
+                TextAlignH = rSource.TextAlignH;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.TextAlignV, rSource._VisualPropertyEnabled) == 1)
+            {
+                TextAlignV = rSource.TextAlignV;
+            }
+            if (Data.GetBit((int)UI.VisualPropBit.Rotation, rSource._VisualPropertyEnabled) == 1)
+            {
+                Rotation = rSource.Rotation;
+            }
+        }
+
+        public void ResolveFlowValues()
+        {
+            //this should be applied to element.ResolvedStyle
+
         }
     }
 
