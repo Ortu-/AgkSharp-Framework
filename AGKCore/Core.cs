@@ -159,7 +159,7 @@ namespace AGKCore
 
         public static bool Init(string[] args, string title)
         {
-            StaticInvoke.Add(App.Log);
+            Dispatcher.Add(App.Log);
 
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
@@ -399,11 +399,6 @@ namespace AGKCore
             FunctionName = rName;
             Required = rRequired;
             IgnorePause = rIgnore;
-        }
-
-        public void Run()
-        {
-            var res = StaticInvoke.Call(this.FunctionName, null);
         }
 
         public static void AddRequiredToUpdate(string rName, string rRequired)

@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace AGKCore
 {
-    public static class StaticInvoke
+    public static class Dispatcher
     {
         private static List<Invokable> _FunctionList = new List<Invokable>();
 
@@ -21,7 +21,7 @@ namespace AGKCore
             _FunctionList.Add(inv);
         }
 
-        public static object Call(string rCallable, string rArgs)
+        public static object Invoke(string rCallable, string rArgs)
         {
             return _FunctionList.FirstOrDefault(el => el.Name == rCallable).Function.DynamicInvoke(rArgs);
         }

@@ -70,7 +70,7 @@ namespace AgkSharp_Template
                     }
                     if(App.Timing.PauseState != 1 || u.IgnorePause)
                     {
-                        u.Run();
+                        Dispatcher.Invoke(u.FunctionName, null);
                     }
                 }
                 if (!App.Status.IsRunning)

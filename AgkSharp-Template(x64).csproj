@@ -63,7 +63,7 @@
   <ItemGroup>
     <Compile Include="AGKCore\UserInterface.cs" />
     <Compile Include="AGKCore\Media.cs" />
-    <Compile Include="AGKCore\StaticInvoke.cs" />
+    <Compile Include="AGKCore\Dispatcher.cs" />
     <Compile Include="AGKCore\Scheduler.cs" />
     <Compile Include="AGKCore\Data.cs" />
     <Compile Include="AGKCore\Core.cs" />
