@@ -112,10 +112,10 @@ namespace AGKCore.UI
         public string MarginBottom { get; private set; } = "0px";               //#px|#%
         public string MarginLeft { get; private set; } = "0px";                 //#px|#%
         public string MarginRight { get; private set; } = "0px";                //#px|#%
-        public string MinWidth { get; private set; } = "0px";                   //#px|#%
-        public string MaxWidth { get; private set; } = "0px";                   //#px|#%
-        public string MinHeight { get; private set; } = "0px";                  //#px|#%
-        public string MaxHeight { get; private set; } = "0px";                  //#px|#%
+        public string MinWidth { get; private set; } = "0px";                   //#px
+        public string MaxWidth { get; private set; } = "0px";                   //#px
+        public string MinHeight { get; private set; } = "0px";                  //#px
+        public string MaxHeight { get; private set; } = "0px";                  //#px
 
         //Visual Props
         public uint    BackgroundColor { get; private set; } = 0x00000000;
@@ -616,7 +616,296 @@ namespace AGKCore.UI
         public void ResolveFlowValues()
         {
             //this should be applied to element.ResolvedStyle
+            //if position is absolute, use root values as parent values;
+            UI.Element parent;
+            if (Position.ToLower() == "absolute")
+            {
+                parent = UserInterface.ElementList[0];
+            }
+            else
+            {
+                parent = Owner.Parent;
+            }
 
+            //get parent values
+            int parentW = Convert.ToInt32(parent.ResolvedStyle.Width);
+            int parentH = Convert.ToInt32(parent.ResolvedStyle.Height);
+
+            int parentContentW = Convert.ToInt32(parent.ResolvedStyle._InnerW);
+            int parentContentH = Convert.ToInt32(parent.ResolvedStyle._InnerH);
+
+            int parentX = Convert.ToInt32(parent.ResolvedStyle._FinalX);
+            int parentY = Convert.ToInt32(parent.ResolvedStyle._FinalY);
+
+            int parentContentX = Convert.ToInt32(parent.ResolvedStyle._InnerX);
+            int parentContentY = Convert.ToInt32(parent.ResolvedStyle._InnerY);
+
+            //get element values
+            int resolvedW;
+            int resolvedH;
+            int resolvedContentW;
+            int resolvedContentH;
+            int resolvedPadT;
+            int resolvedPadB;
+            int resolvedPadL;
+            int resolvedPadR;
+            int resolvedMargT;
+            int resolvedMargB;
+            int resolvedMargL;
+            int resolvedMargR;
+            int resolvedBorderT;
+            int resolvedBorderB;
+            int resolvedBorderL;
+            int resolvedBorderR;
+            int resolvedTextIndent;
+            int resolvedTop;
+            int resolvedLeft;
+            int resolvedX;
+            int resolvedY;
+
+            //width
+            var parsedSize = Data.ParseSize(Width);
+            resolvedW = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                //remove parent padding from child final width if child width is % of parent
+                //NOTE: when the parent was resolved, it's padding gets added to its width making the resolved width larger than its content width.
+                //	child % needs to look at the parents final content width.		
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedW = (int)Math.Floor(parentContentW * tFactor);
+            }
+            //min/max should only be specified in pixels, after the element % mhas been converted to pixels, we can check against the min/max values
+            if (MinWidth[0] != '0')
+            {
+                int minW = Data.ParseSize(MinWidth).Value;
+                if(resolvedW < minW)
+                {
+                    resolvedW = minW;
+                }
+            }
+            if (MaxWidth[0] != '0')
+            {
+                int maxW = Data.ParseSize(MaxWidth).Value;
+                if (resolvedW < maxW)
+                {
+                    resolvedW = maxW;
+                }
+            }
+            //padding may expand resolvedW after this, capture current size as the inner content size
+            resolvedContentW = resolvedW;
+
+            //height
+            parsedSize = Data.ParseSize(Height);
+            resolvedH = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedH = (int)Math.Floor(parentContentH * tFactor);
+            }
+            if (MinHeight[0] != '0')
+            {
+                int minH = Data.ParseSize(MinHeight).Value;
+                if (resolvedH < minH)
+                {
+                    resolvedH = minH;
+                }
+            }
+            if (MaxHeight[0] != '0')
+            {
+                int maxH = Data.ParseSize(MaxHeight).Value;
+                if (resolvedH < maxH)
+                {
+                    resolvedH = maxH;
+                }
+            }
+            resolvedContentH = resolvedH;
+
+            //TODO: handle overflow: visible|hidden|scroll
+
+            //padding
+            parsedSize = Data.ParseSize(PaddingTop);
+            resolvedPadT = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedPadT = (int)Math.Floor(parentContentH * tFactor);
+                resolvedH += resolvedPadT;
+            }
+            parsedSize = Data.ParseSize(PaddingBottom);
+            resolvedPadB = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedPadB = (int)Math.Floor(parentContentH * tFactor);
+                resolvedH += resolvedPadB;
+            }
+            parsedSize = Data.ParseSize(PaddingLeft);
+            resolvedPadL = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedPadL = (int)Math.Floor(parentContentW * tFactor);
+                resolvedW += resolvedPadL;
+            }
+            parsedSize = Data.ParseSize(PaddingRight);
+            resolvedPadR = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedPadR = (int)Math.Floor(parentContentW * tFactor);
+                resolvedW += resolvedPadR;
+            }
+
+            //margin
+            parsedSize = Data.ParseSize(MarginTop);
+            resolvedMargT = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedMargT = (int)Math.Floor(parentContentH * tFactor);
+            }
+            parsedSize = Data.ParseSize(MarginBottom);
+            resolvedMargB = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedMargB = (int)Math.Floor(parentContentH * tFactor);
+            }
+            parsedSize = Data.ParseSize(MarginLeft);
+            resolvedMargL = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedMargL = (int)Math.Floor(parentContentW * tFactor);
+            }
+            parsedSize = Data.ParseSize(MarginRight);
+            resolvedMargR = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedMargR = (int)Math.Floor(parentContentW * tFactor);
+            }
+
+            //border-width
+            //NOTE: per css spec, border cannot be assigned as %
+            resolvedBorderT = Data.ParseSize(BorderTop.Size).Value;
+            resolvedBorderB = Data.ParseSize(BorderBottom.Size).Value;
+            resolvedBorderL = Data.ParseSize(BorderLeft.Size).Value;
+            resolvedBorderR = Data.ParseSize(BorderRight.Size).Value;
+
+            //text-indent
+            parsedSize = Data.ParseSize(TextIndent);
+            resolvedTextIndent = parsedSize.Value;
+            if (parsedSize.IsPercent)
+            {
+                float tFactor = parsedSize.Value * 0.01f;
+                resolvedTextIndent = (int)Math.Floor(parentContentW * tFactor);
+            }
+
+            //position
+            if(UserInterface.ElementDrag.IsActive && UserInterface.ElementDrag.DragElement == Owner)
+            {
+                //if this element is being dragged, position will be set by the mouse
+                resolvedTop = 0;
+                resolvedLeft = 0;
+                resolvedX = Hardware.Mouse.PosX - UserInterface.ElementDrag.OffsetX;
+                resolvedY = Hardware.Mouse.PosY - UserInterface.ElementDrag.OffsetY;
+            }
+            else
+            {
+                parsedSize = Data.ParseSize(Top);
+                resolvedTop = parsedSize.Value;
+                if (parsedSize.IsPercent)
+                {
+                    float tFactor = parsedSize.Value * 0.01f;
+                    resolvedTop = (int)Math.Floor(parentContentH * tFactor);
+                }
+                parsedSize = Data.ParseSize(Left);
+                resolvedLeft = parsedSize.Value;
+                if (parsedSize.IsPercent)
+                {
+                    float tFactor = parsedSize.Value * 0.01f;
+                    resolvedLeft = (int)Math.Floor(parentContentW * tFactor);
+                }
+
+                switch (PositionAlignH)
+                {
+                    case "left":
+                        resolvedX = parentContentX + resolvedMargL + resolvedBorderL + resolvedLeft;
+                        break;
+                    case "right":
+                        resolvedX = (parentContentX + parentContentW) - (resolvedMargR + resolvedW + resolvedBorderR) + resolvedLeft;
+                        break;
+                    case "center":
+                        resolvedX = (int)Math.Floor((parentContentX + (parentContentW * 0.5)) - (resolvedMargR + (resolvedW * 0.5) + resolvedBorderR) + resolvedLeft);
+                        break;
+                    default: //left
+                        resolvedX = parentContentX + resolvedMargL + resolvedBorderL + resolvedLeft;
+                        break;
+                }
+
+                switch (PositionAlignV)
+                {
+                    case "top":
+                        resolvedY = parentContentY + resolvedMargT + resolvedBorderT + resolvedTop;
+                        break;
+                    case "bottom":
+                        resolvedY = (parentContentY + parentContentH) - (resolvedMargB + resolvedH + resolvedBorderB) + resolvedTop;
+                        break;
+                    case "center":
+                        resolvedY = (int)Math.Floor((parentContentY + (parentContentH * 0.5)) - (resolvedMargB + (resolvedH * 0.5) + resolvedBorderB) + resolvedTop);
+                        break;
+                    default: //top
+                        resolvedY = parentContentY + resolvedMargT + resolvedBorderT + resolvedTop;
+                        break;
+                }
+            }
+
+            //apply it all down
+            Width = resolvedW.ToString();
+            Height = resolvedH.ToString();
+            PaddingTop = resolvedPadT.ToString();
+            PaddingBottom = resolvedPadB.ToString();
+            PaddingLeft = resolvedPadL.ToString();
+            PaddingRight = resolvedPadR.ToString();
+            MarginTop = resolvedMargT.ToString();
+            MarginBottom = resolvedMargB.ToString();
+            MarginLeft = resolvedMargL.ToString();
+            MarginRight = resolvedMargR.ToString();
+            BorderTop.Size = resolvedBorderT.ToString();
+            BorderBottom.Size = resolvedBorderB.ToString();
+            BorderLeft.Size = resolvedBorderL.ToString();
+            BorderRight.Size = resolvedBorderR.ToString();
+            TextIndent = resolvedTextIndent.ToString();
+            Top = resolvedTop.ToString();
+            Left = resolvedLeft.ToString();
+            _FinalX = resolvedX;
+            _FinalY = resolvedY;
+            _FinalW = resolvedW;
+            _FinalH = resolvedH;
+            _InnerX = resolvedX + resolvedPadL;
+            _InnerY = resolvedY + resolvedPadT;
+            _InnerW = resolvedContentW;
+            _InnerH = resolvedContentH;
+
+            //enforce visibility
+            if(parent.ResolvedStyle.Display == "hidden")
+            {
+                Display = "hidden";
+            }
+
+            uint tIndex = UserInterface.ElementList.IndexOf(Owner);
+            int tVisible = Display == "hidden" ? 0 : 1;
+            if (Agk.GetSpriteVisible(tIndex) != tVisible)
+            {
+                Agk.SetSpriteVisible(tIndex, tVisible);
+            }
+            if (Agk.GetTextVisible(tIndex) != tVisible)
+            {
+                Agk.SetTextVisible(tIndex, tVisible);
+            }
+
+            _IsResolved = true;
         }
     }
 

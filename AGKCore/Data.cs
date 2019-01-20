@@ -43,6 +43,31 @@ namespace AGKCore
             return rData;
         }
 
+        public static ParsedSizeData ParseSize(string rValue)
+        {
+            ParsedSizeData res = new ParsedSizeData();
+            if (String.IsNullOrEmpty(rValue))
+            {
+                rValue = "0px";
+            }
+            if(rValue[rValue.Length - 1] == '%')
+            {
+                res.IsPercent = true;
+                res.Value = Convert.ToInt32(rValue.Substring(0, rValue.Length - 1));
+            }
+            else if (rValue[rValue.Length - 1] == 'x')
+            {
+                res.IsPercent = false;
+                res.Value = Convert.ToInt32(rValue.Substring(0, rValue.Length - 2));
+            }
+            else
+            {
+                res.IsPercent = false;
+                res.Value = Convert.ToInt32(rValue);
+            }
+            return res;
+        }
+
         public static uint ParseColor(string rValue)
         {
             string valR;
@@ -98,6 +123,12 @@ namespace AGKCore
 
             return 0;
         }
+    }
+
+    public struct ParsedSizeData
+    {
+        public bool IsPercent;
+        public int Value;
     }
 
 }
