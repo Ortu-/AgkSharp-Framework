@@ -1,11 +1,12 @@
 ﻿using AgkSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AGKCore.UI
 {
-    public static class UserInterface
+    public class UserInterface
     {
         public static UI.StatusData Status = new StatusData();
         public static UI.ElementDragData ElementDrag = new ElementDragData();
@@ -13,11 +14,39 @@ namespace AGKCore.UI
         public static List<UI.Element> ElementList = new List<Element>();
         public static List<UI.StyleClass> StyleClassList = new List<StyleClass>();
 
+        public UserInterface()
+        {
+#if DEBUG
+            App.Log("UserInterface.cs", 2, "main", "> Begin Init UI");
+#endif
+            Dispatcher.Add(UserInterface.UpdatePageFlow);
+            App.UpdateList.Add(new UpdateHandler("UserInterface.UpdatePageFlow", null, true));
+
+            //set up root element
+            UI.Element tElement = new UI.Element();
+            tElement.Id = "root";
+            tElement.Style.SetProp("width", App.Config.Screen.Width.ToString() + "px");
+            tElement.Style.SetProp("height", App.Config.Screen.Height.ToString() + "px");
+            ElementList.Add(tElement);
+#if DEBUG
+            App.Log("UserInterface.cs", 2, "main", "> End Init UI");
+#endif
+        }
+
         public static void ResetResolvedStyleProps()
         {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> Begin ResetResolvedStyleProps");
+#endif
             ElementList[0].IsDirty = false; //skip root element
             foreach(var e in ElementList)
             {
+                //skip root
+                if (e == ElementList[0])
+                {
+                    continue;
+                }
+
                 //if parent is dirty, child also needs to be resolved
                 if (e.Parent.IsDirty)
                 {
@@ -31,7 +60,275 @@ namespace AGKCore.UI
 
             //root element is always = app window dimensions and provides context for all child %
             ElementList[0].ResolvedStyle.ResolveAsScreen();
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> End ResetResolvedStyleProps");
+#endif
         }
+
+        public static void UpdatePageFlow(object rArgs)
+        {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> Begin UpdatePageFlow");
+#endif
+            int dirtyCount = 0;
+            if(ElementList.Count == 0)
+            {
+                return;
+            }
+
+            //TODO: updateTransitions()
+            UserInterface.ResetResolvedStyleProps();
+
+            //----- resolve styling and page flow ----------------------
+
+            bool keepResolvingDeferred = true;
+            while (keepResolvingDeferred)
+            {
+                keepResolvingDeferred = false;
+
+                for (uint iElementIndex = 0; iElementIndex < ElementList.Count; iElementIndex++)
+                {
+                    //skip root
+                    if (ElementList[(int)iElementIndex] == ElementList[0])
+                    {
+                        continue; 
+                    }
+
+                    bool resolveThis = true;
+
+                    //skip if already resolved
+                    if (ElementList[(int)iElementIndex].ResolvedStyle._IsResolved)
+                    {
+                        resolveThis = false; 
+                    }
+
+                    //defer if parent is not yet resolved
+                    if(resolveThis && !ElementList[(int)iElementIndex].Parent.ResolvedStyle._IsResolved)
+                    {
+                        resolveThis = false;
+                        keepResolvingDeferred = true;
+                    }
+
+                    if (resolveThis)
+                    {
+                        ElementList[(int)iElementIndex].ResolvedStyle.ApplyInheritedStyleProps();
+                        foreach(var iStyleClass in ElementList[(int)iElementIndex].StyleClassList)
+                        {
+                            ElementList[(int)iElementIndex].ResolvedStyle.ApplyStyleProps(iStyleClass.Style);
+                        }
+                        ElementList[(int)iElementIndex].ResolvedStyle.ApplyStyleProps(ElementList[(int)iElementIndex].Style);
+                        ElementList[(int)iElementIndex].ResolvedStyle.ResolveFlowValues();
+                    }
+                }
+            }
+
+            //----- render UI ----------------------
+
+            for (uint iElementIndex = 0; iElementIndex < ElementList.Count; iElementIndex++)
+            {
+                //skip root
+                if (iElementIndex == 0)
+                {
+                    continue;
+                }
+
+                if(ElementList[(int)iElementIndex].ResolvedStyle.Display == "visible")
+                {
+                    if(ElementList[(int)iElementIndex].IsDirty || !String.IsNullOrEmpty(ElementList[(int)iElementIndex].Value))
+                    {
+                        //get flow data
+                        int borderSizeT = Convert.ToInt32(ElementList[(int)iElementIndex].ResolvedStyle.BorderTop.Size);
+                        int borderSizeB = Convert.ToInt32(ElementList[(int)iElementIndex].ResolvedStyle.BorderBottom.Size);
+                        int borderSizeL = Convert.ToInt32(ElementList[(int)iElementIndex].ResolvedStyle.BorderLeft.Size);
+                        int borderSizeR = Convert.ToInt32(ElementList[(int)iElementIndex].ResolvedStyle.BorderRight.Size);
+                        int finalX = ElementList[(int)iElementIndex].ResolvedStyle._FinalX;
+                        int finalY = ElementList[(int)iElementIndex].ResolvedStyle._FinalY;
+                        int finalW = ElementList[(int)iElementIndex].ResolvedStyle._FinalW;
+                        int finalH = ElementList[(int)iElementIndex].ResolvedStyle._FinalH;
+                        int contentX = ElementList[(int)iElementIndex].ResolvedStyle._InnerX;
+                        int contentY = ElementList[(int)iElementIndex].ResolvedStyle._InnerY;
+                        int contentW = ElementList[(int)iElementIndex].ResolvedStyle._InnerW;
+                        int contentH = ElementList[(int)iElementIndex].ResolvedStyle._InnerH;
+
+                        //draw element background
+                        if(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundOpacity > 0)
+                        {
+                            //TODO: handle overflow and repeat
+                            if (String.IsNullOrEmpty(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage))
+                            {
+#if DEBUG
+                                App.Log("UserInterface.cs", 1, "ui", "  no backgroundImage, make a color image");
+#endif
+                                //no image, make color
+                                var tColor = Media.MakeColorImage((uint)finalW, (uint)finalH, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, 1);
+                                ElementList[(int)iElementIndex].Style.SetProp("background-image", tColor.File);
+                                ElementList[(int)iElementIndex].ResolvedStyle.SetProp("background-image", tColor.File);
+                            }
+                            //check for animated frames
+                            ImageAsset tImg;
+                            if (ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage.Contains("|"))
+                            {
+                                var imgList = ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage.Split('|');
+                                tImg = Media.GetImageAsset(imgList[0], 1.0f, 1.0f);
+                                Agk.CreateSprite(iElementIndex, tImg.Number);
+                                for(int i = 1; i < imgList.Count(); i++)
+                                {
+                                    var frame = Media.GetImageAsset(imgList[i], 1.0f, 1.0f);
+                                    Agk.AddSpriteAnimationFrame(iElementIndex, frame.Number);
+                                }
+                                Agk.PlaySprite(iElementIndex, 10.0f, 1, 1, imgList.Count()); //TODO: add style prop to control speed
+                                ElementList[(int)iElementIndex].Style.SetProp("background-image", imgList[0]);
+                                ElementList[(int)iElementIndex].ResolvedStyle.SetProp("background-image", imgList[0]);
+                            }
+                            else
+                            {
+                                tImg = Media.GetImageAsset(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage, 1.0f, 1.0f);
+                                if (!Agk.IsSpriteExists(iElementIndex))
+                                {
+#if DEBUG
+                                    App.Log("UserInterface.cs", 1, "ui", $"  no sprite for background. make a sprite {iElementIndex.ToString()}");
+#endif
+                                    Agk.CreateSprite(iElementIndex, tImg.Number);
+                                }
+                                Agk.SetSpriteImage(iElementIndex, tImg.Number);
+                            }
+
+                            //Agk.SetSpriteImage(iElementIndex, tImg.Number);
+                            Agk.SetSpriteScale(iElementIndex, contentW / Agk.GetImageWidth(tImg.Number), contentH / Agk.GetImageHeight(tImg.Number));
+                            Agk.SetSpritePosition(iElementIndex, contentX, contentY);
+                            Agk.SetSpriteColorAlpha(iElementIndex, (int)(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundOpacity * 0.01 * 255));
+                            Agk.SetSpriteDepth(iElementIndex, (int)ElementList[(int)iElementIndex].ResolvedStyle.ZIndex);
+                            Agk.SetSpriteAngle(iElementIndex, ElementList[(int)iElementIndex].ResolvedStyle.Rotation);
+                        }
+
+                        //draw borders
+                        //TODO: convert to sprite, apply backgroundOpacity
+                        if(borderSizeT > 0)
+                        {
+                            Agk.DrawBox(finalX, finalY, (finalX + finalW), (finalY + borderSizeT), ElementList[(int)iElementIndex].ResolvedStyle.BorderTop.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderTop.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderTop.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderTop.Color, 1);
+                        }
+                        if (borderSizeB > 0)
+                        {
+                            Agk.DrawBox(finalX, (finalY + finalH - borderSizeB), (finalX + finalW), (finalY + finalH), ElementList[(int)iElementIndex].ResolvedStyle.BorderBottom.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderBottom.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderBottom.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderBottom.Color, 1);
+                        }
+                        if (borderSizeR > 0)
+                        {
+                            Agk.DrawBox((finalX + finalW - borderSizeR), (finalY + borderSizeT), (finalX + finalW), (finalY + finalH - borderSizeB), ElementList[(int)iElementIndex].ResolvedStyle.BorderRight.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderRight.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderRight.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderRight.Color, 1);
+                        }
+                        if (borderSizeL > 0)
+                        {
+                            Agk.DrawBox(finalX, (finalY + borderSizeT), (finalX + borderSizeL), (finalY + finalH - borderSizeB), ElementList[(int)iElementIndex].ResolvedStyle.BorderLeft.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderLeft.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderLeft.Color, ElementList[(int)iElementIndex].ResolvedStyle.BorderLeft.Color, 1);
+                        }
+
+                        //draw text
+                        if (!String.IsNullOrEmpty(ElementList[(int)iElementIndex].Value))
+                        {
+                            if (!Agk.IsTextExists(iElementIndex))
+                            {
+#if DEBUG
+                                App.Log("UserInterface.cs", 1, "ui", $"  no text for element {iElementIndex.ToString()}. make a text");
+#endif
+                                Agk.CreateText(iElementIndex, ElementList[(int)iElementIndex].Value);
+                            }
+                            switch(ElementList[(int)iElementIndex].ResolvedStyle.TextTransform.ToLower())
+                            {
+                                case "lower":
+                                    Agk.SetTextString(iElementIndex, ElementList[(int)iElementIndex].Value.ToLower());
+                                    break;
+                                case "upper":
+                                    Agk.SetTextString(iElementIndex, ElementList[(int)iElementIndex].Value.ToUpper());
+                                    break;
+                                case "capitalize":
+                                    Agk.SetTextString(iElementIndex, ElementList[(int)iElementIndex].Value[0].ToString().ToUpper() + ElementList[(int)iElementIndex].Value.Substring(1));
+                                    break;
+                                default:
+                                    Agk.SetTextString(iElementIndex, ElementList[(int)iElementIndex].Value);
+                                    break;
+                            }
+                            Agk.SetTextMaxWidth(iElementIndex, contentW);
+                            Agk.SetTextSize(iElementIndex, ElementList[(int)iElementIndex].ResolvedStyle.FontSize);
+                            Agk.SetTextColor(iElementIndex, Agk.GetColorRed(ElementList[(int)iElementIndex].ResolvedStyle.Color), Agk.GetColorGreen(ElementList[(int)iElementIndex].ResolvedStyle.Color), Agk.GetColorBlue(ElementList[(int)iElementIndex].ResolvedStyle.Color), (uint)(ElementList[(int)iElementIndex].ResolvedStyle.Opacity * 0.01 * 255));
+                            Agk.SetTextDepth(iElementIndex, (int)(ElementList[(int)iElementIndex].ResolvedStyle.ZIndex - 1));
+                            if (ElementList[(int)iElementIndex].ResolvedStyle.TextDecoration.ToLower().Contains("bold"))
+                            {
+                                Agk.SetTextBold(iElementIndex, 1);
+                            }
+                            else
+                            {
+                                Agk.SetTextBold(iElementIndex, 0);
+                            }
+
+                            int textPosH = 0;
+                            int textPosV = 0;
+                            switch (ElementList[(int)iElementIndex].ResolvedStyle.TextAlignH)
+                            {
+                                case "right":
+                                    Agk.SetTextAlignment(iElementIndex, 2);
+                                    textPosH = finalX + finalW;
+                                    break;
+                                case "center":
+                                    Agk.SetTextAlignment(iElementIndex, 1);
+                                    textPosH = finalX + (int)(finalW * 0.5);
+                                    break;
+                                default: //left
+                                    Agk.SetTextAlignment(iElementIndex, 0);
+                                    textPosH = finalX;
+                                    break;
+                            }
+                            switch (ElementList[(int)iElementIndex].ResolvedStyle.TextAlignV)
+                            {
+                                case "bottom":
+                                    textPosV = finalY + finalH - (int)(Agk.GetTextTotalHeight(iElementIndex));
+                                    break;
+                                case "center":
+                                    textPosV = finalY + (int)(finalH * 0.5) - (int)(Agk.GetTextTotalHeight(iElementIndex) * 0.5);
+                                    break;
+                                default: //top
+                                    textPosV = finalY;
+                                    break;
+                            }
+                            Agk.SetTextPosition(iElementIndex, textPosH, textPosV);
+                            Agk.SetTextAngle(iElementIndex, ElementList[(int)iElementIndex].ResolvedStyle.Rotation);
+                        }
+                    }
+                }
+
+                if (ElementList[(int)iElementIndex].IsDirty)
+                {
+                    ElementList[(int)iElementIndex].IsDirty = false;
+                    ++dirtyCount;
+                }
+            }
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> End UpdatePageFlow");
+#endif
+        }
+
+        public Element GetElementById(string rId)
+        {
+            return ElementList.FirstOrDefault(el => el.Id == rId);
+        }
+
+        public List<Element> GetElementsByName(string rName)
+        {
+            return ElementList.FindAll(el => el.Name == rName).ToList();
+        }
+
+        public List<Element> GetElementsByTagName(string rName)
+        {
+            return ElementList.FindAll(el => el.Tag == rName).ToList();
+        }
+
+        public List<Element> GetElementsByClassName(string rName)
+        {
+            return ElementList.FindAll(el => el.StyleClassList.First(cl => cl.ClassName == rName) != null).ToList();
+        }
+
+        public StyleClass GetStyleClassByName(string rStyleClass)
+        {
+            return UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass);
+        }
+
     }
 
     public class Element
@@ -40,7 +337,7 @@ namespace AGKCore.UI
         public string Name;
         public string Tag;
         public Element Parent;
-        public static List<UI.StyleClass> StyleClassList = new List<StyleClass>();
+        public List<UI.StyleClass> StyleClassList = new List<StyleClass>();
         public StylePropertyData Style;
         public StylePropertyData ResolvedStyle;
         public string Value;
@@ -66,6 +363,20 @@ namespace AGKCore.UI
         {
             Style = new StylePropertyData(this);
             ResolvedStyle = new StylePropertyData(this);
+        }
+
+        public void SetParent(string rParentId)
+        {
+            Parent = UserInterface.ElementList.FirstOrDefault(el => el.Id == rParentId);
+            Parent.IsDirty = true;
+            IsDirty = true;
+        }
+
+        public void SetStyleClass(string rStyleClass)
+        {
+            StyleClassList.Add(UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass));
+            Parent.IsDirty = true;
+            IsDirty = true;
         }
     }
 
@@ -103,10 +414,10 @@ namespace AGKCore.UI
         public string PaddingRight { get; private set; } = "0px";               //#px|#%
         public string Width { get; private set; } = "100%";                     //#px|#%
         public string Height { get; private set; } = "100%";                    //#px|#%
-        public BorderData BorderTop { get; private set; }
-        public BorderData BorderBottom { get; private set; }
-        public BorderData BorderLeft { get; private set; }
-        public BorderData BorderRight { get; private set; }
+        public BorderData BorderTop { get; private set; } = new BorderData();
+        public BorderData BorderBottom { get; private set; } = new BorderData();
+        public BorderData BorderLeft { get; private set; } = new BorderData();
+        public BorderData BorderRight { get; private set; } = new BorderData();
         //TODO: BorderImage
         public string MarginTop { get; private set; } = "0px";                  //#px|#%
         public string MarginBottom { get; private set; } = "0px";               //#px|#%
@@ -131,7 +442,7 @@ namespace AGKCore.UI
         public uint    Color { get; private set; } = 0xffffffff;                 // :: inheritable
         public string  Font { get; private set; } = "Arial";                     // font name :: inheritable
         public uint    FontSize { get; private set; } = 18;                      // :: inheritable
-        public string  TextDecoration { get; private set; } = "none";            //none|bold|italic|underline :: inheritable
+        public string  TextDecoration { get; private set; } = "none";            //none|bold //TODO:italic|underline :: inheritable
         public string  TextTransform { get; private set; } = "none";             //upper|lower|capitalize :: inheritable
         public string  TextIndent { get; private set; } = "0px";                 //#px|#% first line indent :: inheritable
         public string  TextAlignH { get; private set; } = "left";                //left|right|center :: inheritable
@@ -158,6 +469,9 @@ namespace AGKCore.UI
 
         public void SetProp(string rProp, string rValue)
         {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "- SetProp " + rProp + ": " + rValue);
+#endif
             try
             {
                 //styleClass owner won't have this.
@@ -388,11 +702,11 @@ namespace AGKCore.UI
                     TextIndent = rValue;
                     _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.TextIndent, _VisualPropertyEnabled, 1);
                     break;
-                case "text-alignH":
+                case "text-alignh":
                     TextAlignH = rValue;
                     _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.TextAlignH, _VisualPropertyEnabled, 1);
                     break;
-                case "text-alignV":
+                case "text-alignv":
                     TextAlignV = rValue;
                     _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.TextAlignV, _VisualPropertyEnabled, 1);
                     break;
@@ -421,6 +735,9 @@ namespace AGKCore.UI
 
         public void ApplyInheritedStyleProps()
         {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> Begin ApplyInheritedStyleProps");
+#endif
             //this should be applied to element.ResolvedStyle
             Display = Owner.ResolvedStyle.Display;
             Opacity = Owner.ResolvedStyle.Opacity;
@@ -435,10 +752,16 @@ namespace AGKCore.UI
             TextAlignH = Owner.ResolvedStyle.TextAlignH;
             TextAlignV = Owner.ResolvedStyle.TextAlignV;
             Rotation = Owner.ResolvedStyle.Rotation;
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> End ApplyInheritedStyleProps");
+#endif
         }
 
         public void ApplyStyleProps(StylePropertyData rSource)
         {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> Begin ApplyStyleProps");
+#endif
             //this should be applied to element.ResolvedStyle
             //Flow props
             if (Data.GetBit((int)UI.FlowPropBit.PositionAlignH, rSource._FlowPropertyEnabled) == 1)
@@ -611,10 +934,16 @@ namespace AGKCore.UI
             {
                 Rotation = rSource.Rotation;
             }
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> End ApplyStyleProps");
+#endif
         }
 
         public void ResolveFlowValues()
         {
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> Begin ResolveFlowValues");
+#endif
             //this should be applied to element.ResolvedStyle
             //if position is absolute, use root values as parent values;
             UI.Element parent;
@@ -803,7 +1132,7 @@ namespace AGKCore.UI
             }
 
             //position
-            if(UserInterface.ElementDrag.IsActive && UserInterface.ElementDrag.DragElement == Owner)
+            if (UserInterface.ElementDrag.IsActive && UserInterface.ElementDrag.DragElement == Owner)
             {
                 //if this element is being dragged, position will be set by the mouse
                 resolvedTop = 0;
@@ -889,23 +1218,29 @@ namespace AGKCore.UI
             _InnerH = resolvedContentH;
 
             //enforce visibility
-            if(parent.ResolvedStyle.Display == "hidden")
+            if (parent.ResolvedStyle.Display == "hidden")
             {
                 Display = "hidden";
             }
 
-            uint tIndex = UserInterface.ElementList.IndexOf(Owner);
-            int tVisible = Display == "hidden" ? 0 : 1;
-            if (Agk.GetSpriteVisible(tIndex) != tVisible)
+            uint tIndex = (uint)UserInterface.ElementList.IndexOf(Owner);
+            if (Agk.IsSpriteExists(tIndex))
             {
-                Agk.SetSpriteVisible(tIndex, tVisible);
-            }
-            if (Agk.GetTextVisible(tIndex) != tVisible)
-            {
-                Agk.SetTextVisible(tIndex, tVisible);
+                int tVisible = Display == "hidden" ? 0 : 1;
+                if (Agk.GetSpriteVisible(tIndex) != tVisible)
+                {
+                    Agk.SetSpriteVisible(tIndex, tVisible);
+                }
+                if (Agk.GetTextVisible(tIndex) != tVisible)
+                {
+                    Agk.SetTextVisible(tIndex, tVisible);
+                }
             }
 
             _IsResolved = true;
+#if DEBUG
+            App.Log("UserInterface.cs", 1, "ui", "> End ResolveFlowValues");
+#endif
         }
     }
 

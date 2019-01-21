@@ -160,14 +160,15 @@ namespace AGKCore
         public static bool Init(string[] args, string title)
         {
             Dispatcher.Add(App.Log);
-
+            
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
 
             //config defaults
             App.Config.Log.Level = 3;
             App.Config.Log.File = System.AppDomain.CurrentDomain.BaseDirectory + "app.log";
-            App.Config.Log.Channels = "*";
+            //App.Config.Log.Channels = "*";
+            App.Config.Log.Channels = "|!|error|main|ui|";
 
             App.Config.Screen.Fullscreen = true;
             App.Config.Screen.Width = 0;
@@ -236,11 +237,8 @@ namespace AGKCore
             Agk.UseNewDefaultFonts(1);
 
             //init log
-            System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File            | Level | Channel    | Log" + Environment.NewLine);
+            System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File                     | Level | Channel    | Log" + Environment.NewLine);
             System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
-
-            //finish up
-            UpdateHandler.SortUpdateList();
 
             App.Status.IsRunning = true;
             return true;
@@ -293,7 +291,7 @@ namespace AGKCore
             {
                 if(App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
                 {
-                    System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(15) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
+                    System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
                 }
             }
         }

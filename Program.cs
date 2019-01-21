@@ -25,34 +25,49 @@ namespace AgkSharp_Template
                 return;
             }
 
+            var ui = new UI.UserInterface();
+
+            UpdateHandler.SortUpdateList();
+
 #if DEBUG
             App.Log("Program.cs", 3, "main", "> Init Complete");
 #endif
 
-            // display a background and center it
-            uint bgImg = Agk.CreateSprite(Agk.LoadImage("media/background.jpg"));
-            Agk.SetSpritePosition(bgImg, App.Config.Screen.CenterX - 160, App.Config.Screen.CenterY - 240);
-
-            // create a sprite and center it
-            Agk.CreateSprite(1, 0);
-            Agk.SetSpritePosition(1, App.Config.Screen.CenterX - 30, App.Config.Screen.CenterY - 44);
-
-            // add individual images into an animation list
-            Agk.AddSpriteAnimationFrame(1, Agk.LoadImage("media/item0.png"));
-            Agk.AddSpriteAnimationFrame(1, Agk.LoadImage("media/item1.png"));
-            Agk.AddSpriteAnimationFrame(1, Agk.LoadImage("media/item2.png"));
-            Agk.AddSpriteAnimationFrame(1, Agk.LoadImage("media/item3.png"));
-            Agk.AddSpriteAnimationFrame(1, Agk.LoadImage("media/item4.png"));
-
-            // play the sprite at 10 fps, looping, going from frame 1 to 5
-            Agk.PlaySprite(1, 10.0f, 1, 1, 5);
-
-
             UI.Element tElement = new UI.Element();
-            tElement.Style.SetProp("color", "#fff");
-            tElement.Style.SetProp("color", "#ffffff");
-            tElement.Style.SetProp("color", "#ffffffff");
+            tElement.Id = "sky-panel";
+            tElement.Style.SetProp("width", "320px");
+            tElement.Style.SetProp("height", "480px");
+            tElement.Style.SetProp("background-image", "media/background.jpg");
+            tElement.Style.SetProp("position-alignH", "center");
+            tElement.Style.SetProp("position-alignV", "center");
+            tElement.SetParent("root");
+            UI.UserInterface.ElementList.Add(tElement);
 
+            tElement = new UI.Element();
+            tElement.Id = "balloon";
+            tElement.Style.SetProp("width", "60px");
+            tElement.Style.SetProp("height", "88px");
+            tElement.Style.SetProp("background-image", "media/item0.png|media/item1.png|media/item2.png|media/item3.png|media/item4.png");
+            tElement.Style.SetProp("position-alignH", "center");
+            tElement.Style.SetProp("position-alignV", "center");
+            tElement.SetParent("sky-panel");
+            UI.UserInterface.ElementList.Add(tElement);
+
+            /*
+            UI.Element tElement = new UI.Element();
+            tElement.Style.SetProp("width", "100px");
+            tElement.Style.SetProp("height", "40px");
+            tElement.Style.SetProp("background-color", "#f00");
+            tElement.Style.SetProp("text-decoration", "bold");
+            tElement.Style.SetProp("position-alignH", "center");
+            tElement.Style.SetProp("position-alignV", "bottom");
+            tElement.Style.SetProp("margin-bottom", "20%");
+            tElement.Style.SetProp("text-alignH", "center");
+            tElement.Style.SetProp("text-alignV", "center");
+            tElement.Value = "Hi there!";
+            tElement.SetParent("root");
+            UI.UserInterface.ElementList.Add(tElement);
+            */
 
             while (App.LoopAGK())
             {
@@ -61,8 +76,10 @@ namespace AgkSharp_Template
 #endif
                 //Always update timing, and do it first
                 App.UpdateTiming();
-
-                foreach(var u in App.UpdateList)
+#if DEBUG
+                App.Log("Program.cs", 1, "main", "Processing " + App.UpdateList.Count.ToString() + " updates in queue");
+#endif
+                foreach (var u in App.UpdateList)
                 {
                     if (!App.Status.IsRunning)
                     {
@@ -70,6 +87,9 @@ namespace AgkSharp_Template
                     }
                     if(App.Timing.PauseState != 1 || u.IgnorePause)
                     {
+#if DEBUG
+                        App.Log("Program.cs", 1, "main", "Process from queue " + u.FunctionName);
+#endif
                         Dispatcher.Invoke(u.FunctionName, null);
                     }
                 }
