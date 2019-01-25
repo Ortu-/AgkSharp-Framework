@@ -20,13 +20,16 @@ namespace AgkSharp_Template
         {
             var attrs = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false).FirstOrDefault() as AssemblyTitleAttribute;
 
+            //init Agk
             if(!App.Init(args, attrs.Title))
             {
                 return;
             }
 
+            //init modules
             var ui = new UI.UserInterface();
 
+            //clean up
             UpdateHandler.SortUpdateList();
 
 #if DEBUG
@@ -51,22 +54,18 @@ namespace AgkSharp_Template
             tElement.Style.SetProp("position-alignH", "center");
             tElement.Style.SetProp("position-alignV", "center");
             tElement.SetParent("sky-panel");
+            tElement.HoldMouseFocus = true;
+            tElement.EnableEvents = 1;
+            tElement.OnPress = "App.DoStuff";
             UI.UserInterface.ElementList.Add(tElement);
 
+            Dispatcher.Add(App.DoStuff);
+
             /*
-            UI.Element tElement = new UI.Element();
-            tElement.Style.SetProp("width", "100px");
-            tElement.Style.SetProp("height", "40px");
-            tElement.Style.SetProp("background-color", "#f00");
-            tElement.Style.SetProp("text-decoration", "bold");
-            tElement.Style.SetProp("position-alignH", "center");
-            tElement.Style.SetProp("position-alignV", "bottom");
-            tElement.Style.SetProp("margin-bottom", "20%");
-            tElement.Style.SetProp("text-alignH", "center");
-            tElement.Style.SetProp("text-alignV", "center");
-            tElement.Value = "Hi there!";
-            tElement.SetParent("root");
-            UI.UserInterface.ElementList.Add(tElement);
+            UI.UserInterface.ElementDrag.DragElement = tElement;
+            UI.UserInterface.ElementDrag.IsActive = true;
+            UI.UserInterface.ElementDrag.OffsetX = 30;
+            UI.UserInterface.ElementDrag.OffsetY = 40;
             */
 
             while (App.LoopAGK())
@@ -99,6 +98,11 @@ namespace AgkSharp_Template
                 }
 
                 Agk.Print(Agk.ScreenFPS());
+                Agk.Print(Hardware.Mouse.PosX.ToString() + "," + Hardware.Mouse.PosY.ToString());
+
+                var checkElement = UI.UserInterface.GetElementById("balloon");
+                Agk.Print("Mouse is over balloon? " + checkElement.MouseIsOver.ToString());
+                Agk.Print("Mouse is pressed? " + Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]).ToString());
 
                 Agk.Sync();
             }

@@ -311,24 +311,21 @@ namespace AGKCore
             }
             App.Status.IsRunning = false;
         }
-        
+
         public static void DoStuff(object rArgs)
         {
-            MessageBox.Show("doing stuff");
-        }
-
-        public static void DoStuff2(object sender, KeyEventArgs e)
-        {
-            if(Data.GetBit(1, Hardware.Input[(int)Keys.A]) == 1)
+            var a = rArgs as Scheduler.TimerState;
+            if (a == null)
             {
-                App.Timing.PauseHold = Data.SetBit((int)TimingStatus.PauseType.Player, App.Timing.PauseHold, 1 - Data.GetBit((int)TimingStatus.PauseType.Player, App.Timing.PauseHold));
+                Scheduler.SetInterval(App.DoStuff, rArgs.ToString(), -1, 50, 0, null);
+            }
+            else
+            {
+                var tElement = UI.UserInterface.ElementList[Convert.ToInt32(a.Args)];
+                tElement.Style.SetProp("rotation", (tElement.Style.Rotation + 1).ToString());
             }
         }
 
-        public static void AddKeyDownHandler()
-        {
-            m_Window.KeyDown += DoStuff2;
-        }
 
     }
 

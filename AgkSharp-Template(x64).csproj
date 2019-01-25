@@ -61,6 +61,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AGKCore\MathF.cs" />
     <Compile Include="AGKCore\UserInterface.cs" />
     <Compile Include="AGKCore\Media.cs" />
     <Compile Include="AGKCore\Dispatcher.cs" />

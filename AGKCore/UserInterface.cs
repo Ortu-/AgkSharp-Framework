@@ -22,6 +22,9 @@ namespace AGKCore.UI
             Dispatcher.Add(UserInterface.UpdatePageFlow);
             App.UpdateList.Add(new UpdateHandler("UserInterface.UpdatePageFlow", null, true));
 
+            Dispatcher.Add(UserInterface.GetInterfaceInput);
+            App.UpdateList.Add(new UpdateHandler("UserInterface.GetInterfaceInput", "UserInterface.UpdatePageFlow", true));
+
             //set up root element
             UI.Element tElement = new UI.Element();
             tElement.Id = "root";
@@ -39,7 +42,13 @@ namespace AGKCore.UI
             App.Log("UserInterface.cs", 1, "ui", "> Begin ResetResolvedStyleProps");
 #endif
             ElementList[0].IsDirty = false; //skip root element
-            foreach(var e in ElementList)
+
+            if (UserInterface.ElementDrag.DragElement != null)
+            {
+                UserInterface.ElementDrag.DragElement.IsDirty = true; //always resolve dragging element
+            }
+
+            foreach (var e in ElementList)
             {
                 //skip root
                 if (e == ElementList[0])
@@ -304,27 +313,232 @@ namespace AGKCore.UI
 #endif
         }
 
-        public Element GetElementById(string rId)
+        public static void GetInterfaceInput(object rArgs)
+        {
+            if (Math.Abs(App.Timing.Timer - Status.InputMark) > 200)
+            {
+                Status.InputReady = true;
+            }
+            else
+            {
+                Status.InputReady = false;
+            }
+
+            Data.SetBit((int)TimingStatus.PauseType.UI, App.Timing.PauseHold, 0);
+
+            for (int iElementIndex = 0; iElementIndex < ElementList.Count; iElementIndex++)
+            {
+                var iElement = ElementList[iElementIndex];
+
+                //skip root
+                if (iElementIndex == 0 || iElement.ResolvedStyle.Display == "hidden")
+                {
+                    continue;
+                }
+                if (iElement.HoldPause)
+                {
+                    Data.SetBit((int)TimingStatus.PauseType.UI, App.Timing.PauseHold, 1);
+                }
+                if (iElement.HoldMouseFocus)
+                {
+                    Status.MouseMode = "ui";
+                }
+                if (iElement.HoldKeyFocus)
+                {
+                    Status.KeyMode = "ui";
+                }
+                if (Status.MouseMode == "ui" && Status.KeyMode == "ui")
+                {
+                    if (Data.GetBit((int)TimingStatus.PauseType.UI, App.Timing.PauseHold) == 1)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (Status.MouseMode == "ui")
+            {
+                Agk.SetRawMouseVisible(1);
+            }
+            else
+            {
+                Agk.SetRawMouseVisible(0);
+            }
+
+            if (!Status.InputReady)
+            {
+                return;
+            }
+
+            for (uint iElementIndex = 0; iElementIndex < ElementList.Count; iElementIndex++)
+            {
+                var iElement = ElementList[(int)iElementIndex];
+
+                //skip root
+                if (iElementIndex == 0 || iElement.ResolvedStyle.Display == "hidden")
+                {
+                    continue;
+                }
+
+                //mouse events
+                if (Status.MouseMode == "ui" && iElement.ResolvedStyle.Display != "hidden")
+                {
+                    if (iElement.EnableEvents == 1 || iElement.EnableEvents == 3 || (iElement.EnableEvents == 4 && ElementDrag.IsActive))
+                    {
+                        var oldPressHold = iElement.PressIsHeld;
+                        var oldMouseOver = iElement.MouseIsOver;
+                        iElement.PressIsHeld = false;
+                        iElement.MouseIsOver = false;
+
+                        //if this element is the actively dragging element, enforce mouseOver
+                        if (ElementDrag.DragElement == iElement)
+                        {
+                            oldMouseOver = true;
+                            iElement.MouseIsOver = true;
+                        }
+
+                        //detect mouse over
+                        var x1 = iElement.ResolvedStyle._InnerX;
+                        var y1 = iElement.ResolvedStyle._InnerY;
+                        var x2 = x1 + iElement.ResolvedStyle._InnerW;
+                        var y2 = y1 + iElement.ResolvedStyle._InnerH;
+                        if (Agk.IsSpriteHitTest(iElementIndex, Agk.ScreenToWorldX(Hardware.Mouse.PosX), Agk.ScreenToWorldY(Hardware.Mouse.PosY)))
+                        {
+                            iElement.MouseIsOver = true;
+                            if (!oldMouseOver)
+                            {
+                                //new mouseIn
+                                if (!String.IsNullOrEmpty(iElement.OnMouseIn))
+                                {
+                                    Dispatcher.Invoke(iElement.OnMouseIn, iElementIndex.ToString());
+                                    return;
+                                }
+                            }
+                            //handle press
+                            if (Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]) == 1)
+                            {
+                                iElement.PressIsHeld = true;
+                                if (!oldPressHold)
+                                {
+                                    //new press
+                                    Status.InputMark = App.Timing.Timer;
+                                    if (!String.IsNullOrEmpty(iElement.OnPress))
+                                    {
+                                        Dispatcher.Invoke(iElement.OnPress, iElementIndex.ToString());
+                                        return;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (oldPressHold)
+                                {
+                                    //new release
+                                    if (!String.IsNullOrEmpty(iElement.OnRelease))
+                                    {
+                                        Dispatcher.Invoke(iElement.OnRelease, iElementIndex.ToString());
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                        //detect mouse out
+                        if (oldMouseOver && !iElement.MouseIsOver)
+                        {
+                            if (!String.IsNullOrEmpty(iElement.OnMouseOut))
+                            {
+                                Dispatcher.Invoke(iElement.OnMouseOut, iElementIndex.ToString());
+                                return;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //element is hidden or bound to gameplay, if mouse was over, trigger mouseOut
+                    if (iElement.MouseIsOver)
+                    {
+                        iElement.MouseIsOver = false;
+                        iElement.PressIsHeld = false;
+                        if (!String.IsNullOrEmpty(iElement.OnMouseOut))
+                        {
+                            Dispatcher.Invoke(iElement.OnMouseOut, iElementIndex.ToString());
+                            return;
+                        }
+                    }
+                }
+
+                //key events
+                if(Status.KeyMode == "ui")
+                {
+                    //TODO:
+                    //this handles things like entering text into a chatbox where keys should not trigger regular ui events or character control
+                    //this would include such events as enter key to finalize an input, escape to cancel an input etc
+                    //alphanumerics go to entry buffer, and buffer content will be applied to the active element's value.				
+                }
+                else
+                {
+                    //check keybinds
+                    if(iElement.EnableEvents == 2 || iElement.EnableEvents == 3)
+                    {
+                        bool oldPressHold = iElement.PressIsHeld;
+                        iElement.PressIsHeld = false;
+                        if(iElement.KeyBind > 0)
+                        {
+                            if(Data.GetBit(1, Hardware.Input[iElement.KeyBind]) == 1)
+                            {
+                                iElement.PressIsHeld = true;
+                                if (!oldPressHold)
+                                {
+                                    //new press
+                                    Status.InputMark = App.Timing.Timer;
+                                    if (!String.IsNullOrEmpty(iElement.OnPress))
+                                    {
+                                        Dispatcher.Invoke(iElement.OnPress, iElementIndex.ToString());
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    if (oldPressHold)
+                                    {
+                                        //new release
+                                        if (!String.IsNullOrEmpty(iElement.OnRelease))
+                                        {
+                                            Dispatcher.Invoke(iElement.OnRelease, iElementIndex.ToString());
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static Element GetElementById(string rId)
         {
             return ElementList.FirstOrDefault(el => el.Id == rId);
         }
 
-        public List<Element> GetElementsByName(string rName)
+        public static List<Element> GetElementsByName(string rName)
         {
             return ElementList.FindAll(el => el.Name == rName).ToList();
         }
 
-        public List<Element> GetElementsByTagName(string rName)
+        public static List<Element> GetElementsByTagName(string rName)
         {
             return ElementList.FindAll(el => el.Tag == rName).ToList();
         }
 
-        public List<Element> GetElementsByClassName(string rName)
+        public static List<Element> GetElementsByClassName(string rName)
         {
             return ElementList.FindAll(el => el.StyleClassList.First(cl => cl.ClassName == rName) != null).ToList();
         }
 
-        public StyleClass GetStyleClassByName(string rStyleClass)
+        public static StyleClass GetStyleClassByName(string rStyleClass)
         {
             return UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass);
         }
@@ -712,7 +926,7 @@ namespace AGKCore.UI
                     break;
                 case "rotation":
                     Rotation = Convert.ToUInt32(rValue);
-                    _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.TextDecoration, _VisualPropertyEnabled, 1);
+                    _VisualPropertyEnabled = Data.SetBit((int)UI.VisualPropBit.Rotation, _VisualPropertyEnabled, 1);
                     break;
             }
 
@@ -1223,14 +1437,17 @@ namespace AGKCore.UI
                 Display = "hidden";
             }
 
+            int tVisible = Display == "hidden" ? 0 : 1;
             uint tIndex = (uint)UserInterface.ElementList.IndexOf(Owner);
             if (Agk.IsSpriteExists(tIndex))
             {
-                int tVisible = Display == "hidden" ? 0 : 1;
                 if (Agk.GetSpriteVisible(tIndex) != tVisible)
                 {
                     Agk.SetSpriteVisible(tIndex, tVisible);
                 }
+            }
+            if (Agk.IsTextExists(tIndex))
+            { 
                 if (Agk.GetTextVisible(tIndex) != tVisible)
                 {
                     Agk.SetTextVisible(tIndex, tVisible);

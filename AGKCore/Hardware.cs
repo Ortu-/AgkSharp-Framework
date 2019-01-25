@@ -1,12 +1,4 @@
-﻿using AgkSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-//using System.Windows.Input;
-//using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
+﻿using System.Windows.Forms;
 
 namespace AGKCore
 {
@@ -53,15 +45,16 @@ namespace AGKCore
 
         public static void OnMouseMove(object sender, MouseEventArgs e)
         {
-            Mouse.MoveX = e.X;
-            Mouse.MoveY = e.Y;
+            Mouse.MoveX = e.X - Mouse.PosX;
+            Mouse.MoveY = e.Y - Mouse.PosY;
+            Mouse.PosX = e.X;
+            Mouse.PosY = e.Y;
         }
 
         public static void OnMouseWheel(object sender, MouseEventArgs e)
         {
             Mouse.MoveZ = e.Delta;
         }
-
         
         public static void OnKeyDown(object sender, KeyEventArgs e)
         {
