@@ -1,0 +1,73 @@
+[
+	{"type": "class",
+		"name": "btn-standard",
+		"style": {
+			"width": "150px",
+			"height": "50px",
+			"text-alignH": "center",
+			"text-alignV": "center",
+			"background-color": "#ff777777"
+		}
+	},
+	{"type": "class",
+		"name": "btn-standard-pop",
+		"style": {
+			"width": "150px",
+			"height": "50px",
+			"text-alignH": "center",
+			"text-alignV": "center",
+			"background-color": "#ffdddddd",
+			"color": "#ff333333"
+		}
+	},
+	{"type": "class",
+		"name": "btn-standard-push",
+		"style": {
+			"width": "150px",
+			"height": "50px",
+			"text-alignH": "center",
+			"text-alignV": "center",
+			"background-color": "#ffbbbbbb"
+		}
+	},
+	{"type": "class",
+		"name": "btn-text",
+		"style": {
+			"width": "250px",
+			"height": "50px",
+			"text-alignV": "center",
+			"background-opacity": "0",
+			"font-size": "16"
+		}
+	},
+	{"type": "class",
+		"name": "btn-text-pop",
+		"style": {
+			"width": "250px",
+			"height": "50px",
+			"text-alignV": "center",
+			"background-opacity": "0",
+			"font-size": "18"
+		}
+	},
+	{"type": "class",
+		"name": "btn-textSm",
+		"style": {
+			"width": "250px",
+			"height": "50px",
+			"text-alignV": "center",
+			"background-opacity": "0",
+			"font-size": "12"
+		}
+	},
+	{"type": "class",
+		"name": "btn-textSm-pop",
+		"style": {
+			"width": "250px",
+			"height": "50px",
+			"text-alignV": "center",
+			"background-opacity": "0",
+			"font-size": "14"
+		}
+	}
+]

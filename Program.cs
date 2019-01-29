@@ -28,6 +28,7 @@ namespace AgkSharp_Template
 
             //init modules
             var ui = new UI.UserInterface();
+            UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
 
             //clean up
             UpdateHandler.SortUpdateList();
@@ -54,8 +55,8 @@ namespace AgkSharp_Template
             tElement.Style.SetProp("position-alignH", "center");
             tElement.Style.SetProp("position-alignV", "center");
             tElement.SetParent("sky-panel");
-            tElement.HoldMouseFocus = true;
             tElement.EnableEvents = 1;
+            tElement.HoldMouseFocus = true;
             tElement.OnPress = "App.DoStuff";
             UI.UserInterface.ElementList.Add(tElement);
 
@@ -89,6 +90,7 @@ namespace AgkSharp_Template
 #if DEBUG
                         App.Log("Program.cs", 1, "main", "Process from queue " + u.FunctionName);
 #endif
+                        
                         Dispatcher.Invoke(u.FunctionName, null);
                     }
                 }

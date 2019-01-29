@@ -1,4 +1,6 @@
 ﻿using AgkSharp;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace AGKCore.UI
         public static List<UI.TransitionData> TransitionList = new List<TransitionData>();
         public static List<UI.Element> ElementList = new List<Element>();
         public static List<UI.StyleClass> StyleClassList = new List<StyleClass>();
+        public static List<UI.Controller> ControllerList = new List<UI.Controller>();
 
         public UserInterface()
         {
@@ -31,9 +34,90 @@ namespace AGKCore.UI
             tElement.Style.SetProp("width", App.Config.Screen.Width.ToString() + "px");
             tElement.Style.SetProp("height", App.Config.Screen.Height.ToString() + "px");
             ElementList.Add(tElement);
+
+            Status.MouseMode = "gameplay";
+            Status.KeyMode = "gameplay";
 #if DEBUG
             App.Log("UserInterface.cs", 2, "main", "> End Init UI");
 #endif
+        }
+
+        public static void LoadPartial(string rFile)
+        {
+            string doc = System.IO.File.ReadAllText(rFile);
+            var view = JsonConvert.DeserializeObject<List<dynamic>>(doc);
+            foreach (var component in view)
+            {
+                if(component.type == "styleClass")
+                {
+                    StyleClass tStyleClass = new StyleClass();
+                    tStyleClass.ClassName = Data.HasOwnProperty(component, "name") ? component.name : "";
+                    if (Data.HasOwnProperty(component, "style"))
+                    {
+                        foreach (var prop in ((JObject)component.style).Properties())
+                        {
+                            tStyleClass.Style.SetProp(prop.Name, prop.Value.ToString());
+                        }
+                    }
+                    StyleClassList.Add(tStyleClass);
+                }
+                if (component.type == "element")
+                {
+                    LoadElement(component, null);
+                }
+            }
+        }
+
+        public static void LoadElement(dynamic component, string rParentId)
+        {
+            Element tElement = new Element();
+            tElement.Id = Data.HasOwnProperty(component, "id") ? component.id : "";
+            tElement.Name = Data.HasOwnProperty(component, "name") ? component.name : "";
+            tElement.Tag = Data.HasOwnProperty(component, "tag") ? component.tag : "";
+            tElement.Value = Data.HasOwnProperty(component, "value") ? component.value : "";
+            tElement.OnPress = Data.HasOwnProperty(component, "onPress") ? component.onPress : "";
+            tElement.OnRelease = Data.HasOwnProperty(component, "onRelease") ? component.onRelease : "";
+            tElement.OnMouseIn = Data.HasOwnProperty(component, "onMouseIn") ? component.onMouseIn : "";
+            tElement.OnMouseOut = Data.HasOwnProperty(component, "onMouseOut") ? component.onMouseOut : "";
+            tElement.KeyBind = Data.HasOwnProperty(component, "keyBind") ? Convert.ToInt32(component.keyBind) : 0;
+            tElement.EnableEvents = Data.HasOwnProperty(component, "enableEvents") ? Convert.ToUInt32(component.enableEvents) : 0u;
+            tElement.HoldPause = Data.HasOwnProperty(component, "holdPause") ? Convert.ToBoolean(component.holdPause) : false;
+            tElement.HoldMouseFocus = Data.HasOwnProperty(component, "holdMouseFocus") ? Convert.ToBoolean(component.holdMouseFocus) : false;
+            tElement.HoldKeyFocus = Data.HasOwnProperty(component, "holdKeyFocus") ? Convert.ToBoolean(component.holdKeyFocus) : false;
+
+            if (String.IsNullOrEmpty(rParentId))
+            {
+                tElement.SetParent("root");
+            }
+            else
+            {
+                tElement.SetParent(rParentId);
+            }
+
+            if (Data.HasOwnProperty(component, "styleClass"))
+            {
+                var classList = component.styleClass.ToString().Split(' ');
+                foreach (var c in classList)
+                {
+                    tElement.SetStyleClass(c);
+                }
+            }
+
+            if (Data.HasOwnProperty(component, "style"))
+            {
+                foreach (var prop in ((JObject)component.style).Properties())
+                {
+                    tElement.Style.SetProp(prop.Name, prop.Value.ToString());
+                }
+            }
+
+            ElementList.Add(tElement);
+
+            if (Data.HasOwnProperty(component, "children"))
+            {
+                foreach(var child in component.children)
+                LoadElement(child, tElement.Id);
+            }
         }
 
         public static void ResetResolvedStyleProps()
@@ -127,6 +211,9 @@ namespace AGKCore.UI
                         }
                         ElementList[(int)iElementIndex].ResolvedStyle.ApplyStyleProps(ElementList[(int)iElementIndex].Style);
                         ElementList[(int)iElementIndex].ResolvedStyle.ResolveFlowValues();
+#if DEBUG
+                        App.Log("UserInterface.cs", 1, "ui", "  resolved " + ElementList[(int)iElementIndex].Id + " " + ElementList[(int)iElementIndex].ResolvedStyle._FinalX + "," + ElementList[(int)iElementIndex].ResolvedStyle._FinalY + " : " + ElementList[(int)iElementIndex].ResolvedStyle._FinalW + "," + ElementList[(int)iElementIndex].ResolvedStyle._FinalH);
+#endif
                     }
                 }
             }
@@ -141,7 +228,7 @@ namespace AGKCore.UI
                     continue;
                 }
 
-                if(ElementList[(int)iElementIndex].ResolvedStyle.Display == "visible")
+                if(ElementList[(int)iElementIndex].ResolvedStyle.Display == "visible" && ElementList[(int)iElementIndex].ResolvedStyle.Opacity > 0)
                 {
                     if(ElementList[(int)iElementIndex].IsDirty || !String.IsNullOrEmpty(ElementList[(int)iElementIndex].Value))
                     {
@@ -273,27 +360,27 @@ namespace AGKCore.UI
                             {
                                 case "right":
                                     Agk.SetTextAlignment(iElementIndex, 2);
-                                    textPosH = finalX + finalW;
+                                    textPosH = contentX + contentW;
                                     break;
                                 case "center":
                                     Agk.SetTextAlignment(iElementIndex, 1);
-                                    textPosH = finalX + (int)(finalW * 0.5);
+                                    textPosH = contentX + (int)(contentW * 0.5);
                                     break;
                                 default: //left
                                     Agk.SetTextAlignment(iElementIndex, 0);
-                                    textPosH = finalX;
+                                    textPosH = contentX;
                                     break;
                             }
                             switch (ElementList[(int)iElementIndex].ResolvedStyle.TextAlignV)
                             {
                                 case "bottom":
-                                    textPosV = finalY + finalH - (int)(Agk.GetTextTotalHeight(iElementIndex));
+                                    textPosV = contentY + contentH - (int)(Agk.GetTextTotalHeight(iElementIndex));
                                     break;
                                 case "center":
-                                    textPosV = finalY + (int)(finalH * 0.5) - (int)(Agk.GetTextTotalHeight(iElementIndex) * 0.5);
+                                    textPosV = contentY + (int)(contentH * 0.5) - (int)(Agk.GetTextTotalHeight(iElementIndex) * 0.5);
                                     break;
                                 default: //top
-                                    textPosV = finalY;
+                                    textPosV = contentY;
                                     break;
                             }
                             Agk.SetTextPosition(iElementIndex, textPosH, textPosV);
@@ -323,7 +410,7 @@ namespace AGKCore.UI
             {
                 Status.InputReady = false;
             }
-
+            
             Data.SetBit((int)TimingStatus.PauseType.UI, App.Timing.PauseHold, 0);
 
             for (int iElementIndex = 0; iElementIndex < ElementList.Count; iElementIndex++)
@@ -375,7 +462,7 @@ namespace AGKCore.UI
                 var iElement = ElementList[(int)iElementIndex];
 
                 //skip root
-                if (iElementIndex == 0 || iElement.ResolvedStyle.Display == "hidden")
+                if (iElementIndex == 0)
                 {
                     continue;
                 }
@@ -402,7 +489,18 @@ namespace AGKCore.UI
                         var y1 = iElement.ResolvedStyle._InnerY;
                         var x2 = x1 + iElement.ResolvedStyle._InnerW;
                         var y2 = y1 + iElement.ResolvedStyle._InnerH;
-                        if (Agk.IsSpriteHitTest(iElementIndex, Agk.ScreenToWorldX(Hardware.Mouse.PosX), Agk.ScreenToWorldY(Hardware.Mouse.PosY)))
+
+                        bool mouseInBounds;
+                        if(iElement.ResolvedStyle.BackgroundOpacity == 0)
+                        {
+                            mouseInBounds = Agk.IsTextHitTest(iElementIndex, Agk.ScreenToWorldX(Hardware.Mouse.PosX), Agk.ScreenToWorldY(Hardware.Mouse.PosY));
+                        }
+                        else
+                        {
+                            mouseInBounds = Agk.IsSpriteHitTest(iElementIndex, Agk.ScreenToWorldX(Hardware.Mouse.PosX), Agk.ScreenToWorldY(Hardware.Mouse.PosY));
+                        }
+
+                        if (mouseInBounds)
                         {
                             iElement.MouseIsOver = true;
                             if (!oldMouseOver)
@@ -480,8 +578,9 @@ namespace AGKCore.UI
                 else
                 {
                     //check keybinds
-                    if(iElement.EnableEvents == 2 || iElement.EnableEvents == 3)
+                    if (iElement.EnableEvents == 2 || iElement.EnableEvents == 3)
                     {
+                        
                         bool oldPressHold = iElement.PressIsHeld;
                         iElement.PressIsHeld = false;
                         if(iElement.KeyBind > 0)
@@ -588,9 +687,21 @@ namespace AGKCore.UI
 
         public void SetStyleClass(string rStyleClass)
         {
-            StyleClassList.Add(UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass));
-            Parent.IsDirty = true;
-            IsDirty = true;
+            if(UserInterface.StyleClassList == null)
+            {
+                return;
+            }
+            var tStyleClass = UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass);
+            if (tStyleClass != null)
+            {
+                StyleClassList.Add(tStyleClass);
+                Parent.IsDirty = true;
+                IsDirty = true;
+            }
+            else
+            {
+                //log warning
+            }
         }
     }
 
@@ -598,6 +709,11 @@ namespace AGKCore.UI
     {
         public string ClassName;
         public StylePropertyData Style;
+
+        public StyleClass()
+        {
+            Style = new StylePropertyData(this);
+        }
     }
 
     public class BorderData
@@ -1543,6 +1659,11 @@ namespace AGKCore.UI
         public uint Duration;
         public uint Start;
         public string Callback;
+    }
+
+    public class Controller
+    {
+
     }
 
 }

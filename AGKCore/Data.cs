@@ -1,6 +1,10 @@
 ﻿using AgkSharp;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace AGKCore
 {
@@ -122,6 +126,11 @@ namespace AGKCore
             }
 
             return 0;
+        }
+
+        public static bool HasOwnProperty(dynamic rObject, string rProperty)
+        {
+            return ((JObject)rObject).Property(rProperty) != null;
         }
     }
 
