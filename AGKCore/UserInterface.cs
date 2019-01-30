@@ -3,6 +3,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -99,7 +102,7 @@ namespace AGKCore.UI
                 var classList = component.styleClass.ToString().Split(' ');
                 foreach (var c in classList)
                 {
-                    tElement.SetStyleClass(c);
+                    tElement.AddStyleClass(c);
                 }
             }
 
@@ -644,13 +647,13 @@ namespace AGKCore.UI
 
     }
 
-    public class Element
+    public class Element : INotifyPropertyChanged
     {
         public string Id;
         public string Name;
         public string Tag;
         public Element Parent;
-        public List<UI.StyleClass> StyleClassList = new List<StyleClass>();
+        public ObservableCollection<UI.StyleClass> StyleClassList = new ObservableCollection<StyleClass>();
         public StylePropertyData Style;
         public StylePropertyData ResolvedStyle;
         public string Value;
@@ -676,7 +679,10 @@ namespace AGKCore.UI
         {
             Style = new StylePropertyData(this);
             ResolvedStyle = new StylePropertyData(this);
+            StyleClassList.CollectionChanged += StyleClassList_Changed;
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public void SetParent(string rParentId)
         {
@@ -685,7 +691,13 @@ namespace AGKCore.UI
             IsDirty = true;
         }
 
-        public void SetStyleClass(string rStyleClass)
+        private void StyleClassList_Changed(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            Parent.IsDirty = true;
+            IsDirty = true;
+        }
+
+        public void AddStyleClass(string rStyleClass)
         {
             if(UserInterface.StyleClassList == null)
             {
@@ -695,8 +707,24 @@ namespace AGKCore.UI
             if (tStyleClass != null)
             {
                 StyleClassList.Add(tStyleClass);
-                Parent.IsDirty = true;
-                IsDirty = true;
+            }
+            else
+            {
+                //log warning
+                Console.WriteLine("could not find class " + rStyleClass);
+            }
+        }
+
+        public void RemoveStyleClass(string rStyleClass)
+        {
+            if (UserInterface.StyleClassList == null)
+            {
+                return;
+            }
+            var tStyleClass = UserInterface.StyleClassList.FirstOrDefault(cl => cl.ClassName == rStyleClass);
+            if (tStyleClass != null)
+            {
+                StyleClassList.Remove(tStyleClass);
             }
             else
             {

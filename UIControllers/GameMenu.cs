@@ -28,7 +28,10 @@ namespace AGKCore.UI
 
         public static void ResumeOnPress(object rArgs)
         {
-            var tElement = UI.UserInterface.GetElementById("gameMenu");
+            var tElement = UI.UserInterface.ElementList[Convert.ToInt32(rArgs)];
+            tElement.RemoveStyleClass(tElement.Name + "-push");
+
+            tElement = UI.UserInterface.GetElementById("gameMenu");
             tElement.Style.SetProp("display", "hidden");
         }
 

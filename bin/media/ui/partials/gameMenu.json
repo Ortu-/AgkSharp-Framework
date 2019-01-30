@@ -1,16 +1,4 @@
 [
-	{"type": "styleClass",
-		"name": "btn-text",
-		"style": {
-			"width": "250px",
-			"height": "50px",
-			"padding-left": "6%",
-			"text-alignV": "center",
-			"background-opacity": "0",
-			"font-size": "32",
-			"z-index": "5"
-		}
-	},
 	{
 		"type": "element",
 		"tag": "div",
@@ -31,10 +19,13 @@
 				"tag": "button",
 				"id": "btn-resume",
 				"styleClass": "btn-text",
-				"name": "btn-txt",
+				"name": "btn-text",
 				"value": "Resume",
 				"enableEvents": "1",
-				"onPress": "GameMenuController.ResumeOnPress",
+				"onMouseIn": "CommonController.DoHoverByType",
+				"onMouseOut": "CommonController.DoUnHoverByType",
+				"onPress": "CommonController.DoPressByType",
+				"onRelease": "GameMenuController.ResumeOnPress",
 				"style": {
 					"position-alignV": "center",
 					"top": "-30px"
@@ -45,10 +36,13 @@
 				"tag": "button",
 				"id": "btn-close",
 				"styleClass": "btn-text",
-				"name": "btn-txt",
+				"name": "btn-text",
 				"value": "Quit",
 				"enableEvents": "1",
-				"onPress": "GameMenuController.QuitOnPress",
+				"onMouseIn": "CommonController.DoHoverByType",
+				"onMouseOut": "CommonController.DoUnHoverByType",
+				"onPress": "CommonController.DoPressByType",
+				"onRelease": "GameMenuController.QuitOnPress",
 				"style": {
 					"position-alignV": "center",
 					"top": "30px"

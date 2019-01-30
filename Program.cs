@@ -28,6 +28,7 @@ namespace AgkSharp_Template
 
             //init modules
             var ui = new UI.UserInterface();
+            UI.UserInterface.ControllerList.Add(new UI.CommonController());
             UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
 
             //clean up
