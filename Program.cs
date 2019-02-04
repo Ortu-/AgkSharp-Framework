@@ -30,6 +30,7 @@ namespace AgkSharp_Template
             var ui = new UI.UserInterface();
             UI.UserInterface.ControllerList.Add(new UI.CommonController());
             UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
+            UI.UserInterface.PreloadImages();
 
             //clean up
             UpdateHandler.SortUpdateList();
@@ -70,6 +71,9 @@ namespace AgkSharp_Template
             UI.UserInterface.ElementDrag.OffsetY = 40;
             */
 
+
+            var testMark = App.Timing.Timer;
+
             while (App.LoopAGK())
             {
 #if DEBUG
@@ -91,7 +95,6 @@ namespace AgkSharp_Template
 #if DEBUG
                         App.Log("Program.cs", 1, "main", "Process from queue " + u.FunctionName);
 #endif
-                        
                         Dispatcher.Invoke(u.FunctionName, null);
                     }
                 }
@@ -101,11 +104,6 @@ namespace AgkSharp_Template
                 }
 
                 Agk.Print(Agk.ScreenFPS());
-                Agk.Print(Hardware.Mouse.PosX.ToString() + "," + Hardware.Mouse.PosY.ToString());
-
-                var checkElement = UI.UserInterface.GetElementById("balloon");
-                Agk.Print("Mouse is over balloon? " + checkElement.MouseIsOver.ToString());
-                Agk.Print("Mouse is pressed? " + Data.GetBit(1, Hardware.Input[Hardware.MouseEnum((int)MouseButtons.Left)]).ToString());
 
                 Agk.Sync();
             }

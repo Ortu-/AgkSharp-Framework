@@ -31,6 +31,9 @@ namespace AGKCore.UI
             Dispatcher.Add(UserInterface.GetInterfaceInput);
             App.UpdateList.Add(new UpdateHandler("UserInterface.GetInterfaceInput", "UserInterface.UpdatePageFlow", true));
 
+            Dispatcher.Add(UserInterface.UpdateTransitions);
+            App.UpdateList.Add(new UpdateHandler("UserInterface.UpdateTransitions", null, false));
+
             //set up root element
             UI.Element tElement = new UI.Element();
             tElement.Id = "root";
@@ -120,6 +123,24 @@ namespace AGKCore.UI
             {
                 foreach(var child in component.children)
                 LoadElement(child, tElement.Id);
+            }
+        }
+
+        public static void PreloadImages()
+        {
+            foreach(var i in StyleClassList)
+            {
+                if (!String.IsNullOrEmpty(i.Style.BackgroundImage))
+                {
+                    Media.GetImageAsset(i.Style.BackgroundImage, 1.0f, 1.0f);
+                }
+            }
+            foreach (var i in ElementList)
+            {
+                if (!String.IsNullOrEmpty(i.Style.BackgroundImage))
+                {
+                    Media.GetImageAsset(i.Style.BackgroundImage, 1.0f, 1.0f);
+                }
             }
         }
 
@@ -618,6 +639,127 @@ namespace AGKCore.UI
                     }
                 }
             }
+        }
+
+        public static void UpdateTransitions(object rArgs)
+        {
+            if(TransitionList.Count == 0)
+            {
+                return;
+            }
+
+            float tElapsed;
+            float tInit;
+            float tTarget;
+            int tVal;
+
+            for(int i = TransitionList.Count - 1; i >= 0; --i)
+            {
+                var tran = TransitionList[i];
+                tElapsed = App.Timing.Timer - tran.Start * 1.0f;
+
+                if (tran.InitialValue.Contains("px"))
+                {
+                    tInit = Convert.ToSingle(tran.InitialValue.Substring(0, tran.InitialValue.Length - 2));
+                }
+                else
+                {
+                    if (tran.InitialValue.Contains("%"))
+                    {
+                        tInit = Convert.ToSingle(tran.InitialValue.Substring(0, tran.InitialValue.Length - 1));
+                    }
+                    else
+                    {
+                        tInit = Convert.ToSingle(tran.InitialValue);
+                    }
+                }
+
+                if (tran.TargetValue.Contains("px"))
+                {
+                    tTarget = Convert.ToSingle(tran.TargetValue.Substring(0, tran.TargetValue.Length - 2));
+                }
+                else
+                {
+                    if (tran.TargetValue.Contains("%"))
+                    {
+                        tTarget = Convert.ToSingle(tran.TargetValue.Substring(0, tran.TargetValue.Length - 1));
+                    }
+                    else
+                    {
+                        tTarget = Convert.ToSingle(tran.TargetValue);
+                    }
+                }
+
+                if (tElapsed < tran.Duration)
+                {
+                    tVal = (int)Math.Floor(tInit + (((tTarget - tInit) / tran.Duration) * tElapsed));
+                    tran.Element.Style.SetProp(tran.Property, tVal.ToString());
+                    if (tTarget > tInit)
+                    {
+                        if(tVal >= tTarget)
+                        {
+                            if (!String.IsNullOrEmpty(tran.Callback))
+                            {
+                                Dispatcher.Invoke(tran.Callback, tran.Element.Id);
+                            }
+                            TransitionList.RemoveAt(i);
+                        }
+                    }
+                    else
+                    {
+                        if(tVal <= tTarget)
+                        {
+                            if (!String.IsNullOrEmpty(tran.Callback))
+                            {
+                                Dispatcher.Invoke(tran.Callback, tran.Element.Id);
+                            }
+                            TransitionList.RemoveAt(i);
+                        }
+                    }
+                }
+                else
+                {
+                    tran.Element.Style.SetProp(tran.Property, tTarget.ToString());
+                    if (!String.IsNullOrEmpty(tran.Callback))
+                    {
+                        Dispatcher.Invoke(tran.Callback, tran.Element.Id);
+                    }
+                    TransitionList.RemoveAt(i);
+                }
+            }
+        }
+
+        public static void FadeScreen(int r, int g, int b, int a, int t)
+        {
+            var tSprite = Agk.CreateSprite(0);
+            Agk.SetSpriteDepth(tSprite, 0);
+            Agk.SetSpriteTransparency(tSprite, 1);
+            Agk.SetSpriteSize(tSprite, App.Config.Screen.Width, App.Config.Screen.Height);
+            float fadeLoading;
+            var tMark = Agk.GetMilliseconds();
+            if(a > 0)
+            {
+                Agk.SetSpriteColor(tSprite, r, g, b, 0);
+                fadeLoading = 0.0f;
+                while(fadeLoading < 255.0f)
+                {
+                    fadeLoading = 0.0f + ((255.0f / t) * Agk.Abs(Agk.GetMilliseconds() - tMark));
+                    Agk.SetSpriteColorAlpha(tSprite, (int)fadeLoading);
+                    Agk.Sync();
+                }
+            }
+            else
+            {
+                Agk.SetSpriteColor(tSprite, r, g, b, 255);
+                fadeLoading = 255.0f;
+                while (fadeLoading > 0.0f)
+                {
+                    fadeLoading = 255.0f - ((255.0f / t) * Agk.Abs(Agk.GetMilliseconds() - tMark));
+                    Agk.SetSpriteColorAlpha(tSprite, (int)fadeLoading);
+                    Agk.Sync();
+                }
+            }
+            Agk.DeleteSprite(tSprite);
         }
 
         public static Element GetElementById(string rId)

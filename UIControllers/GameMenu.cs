@@ -19,6 +19,52 @@ namespace AGKCore.UI
             if(tElement.Style.Display == "hidden")
             {
                 tElement.Style.SetProp("display", "visible");
+
+                tElement = UserInterface.GetElementById("btn-resume");
+                tElement.Style.SetProp("opacity", "1");
+                var tTran = new UI.TransitionData()
+                {
+                    Element = tElement,
+                    InitialValue = "1",
+                    TargetValue = "100",
+                    Property = "opacity",
+                    Duration = 1200,
+                    Start = App.Timing.Timer
+                };
+                UserInterface.TransitionList.Add(tTran);
+                tTran = new UI.TransitionData()
+                {
+                    Element = tElement,
+                    InitialValue = "-1000px",
+                    TargetValue = tElement.Style.Top,
+                    Property = "top",
+                    Duration = 800,
+                    Start = App.Timing.Timer
+                };
+                UserInterface.TransitionList.Add(tTran);
+
+                tElement = UserInterface.GetElementById("btn-close");
+                tElement.Style.SetProp("opacity", "1");
+                tTran = new UI.TransitionData()
+                {
+                    Element = tElement,
+                    InitialValue = "1",
+                    TargetValue = "100",
+                    Property = "opacity",
+                    Duration = 1200,
+                    Start = App.Timing.Timer
+                };
+                UserInterface.TransitionList.Add(tTran);
+                tTran = new UI.TransitionData()
+                {
+                    Element = tElement,
+                    InitialValue = "1000px",
+                    TargetValue = tElement.Style.Top,
+                    Property = "top",
+                    Duration = 800,
+                    Start = App.Timing.Timer
+                };
+                UserInterface.TransitionList.Add(tTran);
             }
             else
             {
