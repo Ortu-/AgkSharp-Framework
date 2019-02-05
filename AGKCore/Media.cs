@@ -11,9 +11,9 @@ namespace AGKCore
 
         public static ImageAsset GetImageAsset(string rFilename, float rScaleX, float rScaleY)
         {
-#if DEBUG
+
             App.Log("Media.cs", 2, "media", "Requested image: " + rFilename + " " + rScaleX.ToString() + " " + rScaleY.ToString());
-#endif  
+  
             foreach (var i in Media.ImageList)
             {
                 if(i.File == rFilename)
@@ -22,16 +22,16 @@ namespace AGKCore
                     {
                         if (Agk.GetImageExists(i.Number) == 1)
                         {
-#if DEBUG
+
                             App.Log("Media.cs", 2, "media", " > found image on " + i.Number.ToString());
-#endif  
+  
                             return i;
                         }
                         else
                         {
-#if DEBUG
+
                             App.Log("Media.cs", 2, "media", " > found image on " + i.Number.ToString() + "but is not valid: reload it");
-#endif  
+  
                             if (Agk.GetFileExists(rFilename) == 1)
                             {
                                 i.Number = Agk.LoadImageResized(rFilename, rScaleX, rScaleY, 0);
@@ -44,9 +44,9 @@ namespace AGKCore
 
             if (Agk.GetFileExists(rFilename) == 1)
             {
-#if DEBUG
+
                 App.Log("Media.cs", 2, "media", " > image not loaded: load it");
-#endif  
+  
                 var tImg = Agk.LoadImageResized(rFilename, rScaleX, rScaleY, 0);
                 var i = new ImageAsset(){
                     Number = tImg,
@@ -63,9 +63,9 @@ namespace AGKCore
                 {
                     //if filename does not include the media folder, we are looking for a generated sprite color image, just return null and keep running
                     //if filename does include media folder, the file is not found and we got problems.
-#if DEBUG
+
                     App.Log("Media.cs", 5, "error", "ERROR: File not found: " + rFilename + " on Media.GetImageAsset");
-#endif  
+  
                     App.StopRunning(true);
                 }
             }
@@ -89,9 +89,9 @@ namespace AGKCore
             var tNum = Agk.GetImage(0, 0, rSizeX, rSizeY);
             Agk.ClearScreen();
             Agk.Swap();
-#if DEBUG
+
             App.Log("Media.cs", 2, "media", " > made image from color");
-#endif  
+  
             tImg = new ImageAsset()
             {
                 Number = tNum,

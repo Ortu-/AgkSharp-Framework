@@ -35,9 +35,9 @@ namespace AgkSharp_Template
             //clean up
             UpdateHandler.SortUpdateList();
 
-#if DEBUG
+
             App.Log("Program.cs", 3, "main", "> Init Complete");
-#endif
+
 
             UI.Element tElement = new UI.Element();
             tElement.Id = "sky-panel";
@@ -76,14 +76,14 @@ namespace AgkSharp_Template
 
             while (App.LoopAGK())
             {
-#if DEBUG
+
                 App.Log("Program.cs", 1, "main", "--- Begin main loop ---");
-#endif
+
                 //Always update timing, and do it first
                 App.UpdateTiming();
-#if DEBUG
+
                 App.Log("Program.cs", 1, "main", "Processing " + App.UpdateList.Count.ToString() + " updates in queue");
-#endif
+
                 foreach (var u in App.UpdateList)
                 {
                     if (!App.Status.IsRunning)
@@ -92,9 +92,9 @@ namespace AgkSharp_Template
                     }
                     if(App.Timing.PauseState != 1 || u.IgnorePause)
                     {
-#if DEBUG
+
                         App.Log("Program.cs", 1, "main", "Process from queue " + u.FunctionName);
-#endif
+
                         Dispatcher.Invoke(u.FunctionName, null);
                     }
                 }

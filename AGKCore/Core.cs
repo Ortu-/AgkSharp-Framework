@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -159,7 +160,7 @@ namespace AGKCore
 
         public static bool Init(string[] args, string title)
         {
-            Dispatcher.Add(App.Log);
+            //Dispatcher.Add(App.Log);
             
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
@@ -285,22 +286,33 @@ namespace AGKCore
             }
         }
 
+        [System.Diagnostics.Conditional("DEBUG")]
         public static void Log(string rSource, int rLevel, string rChannel, string rContent)
         {
             if(rLevel >= App.Config.Log.Level)
             {
                 if(App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
                 {
+                    /*
+                    StackTrace st = new StackTrace(true);
+                    if (st != null)
+                    {
+                        string source = st.GetFrame(1).GetMethod().Name;
+                        rSource = st.GetFrame(1).GetFileName() + " " + st.GetFrame(1).GetFileLineNumber().ToString();
+                    }
+                    */
                     System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
                 }
             }
         }
-        
+
+        /*
         public static void Log(object rArgs)
         {
             dynamic a = JsonConvert.DeserializeObject<dynamic>(rArgs.ToString());
             Log(a.Source.ToString(), (int)a.Level, a.Channel.ToString(), a.Content.ToString());
         }
+        */
 
         public static void StopRunning(bool rError)
         {
@@ -411,24 +423,24 @@ namespace AGKCore
 
         public static void SortUpdateList()
         {
-#if DEBUG
+
             App.Log("Core.cs", 2, "main", "Begin sorting update queue");
-#endif            
+            
             var updateQueue = new List<UpdateHandler>();
             for (int i = App.UpdateList.Count - 1; i >= 0; i--)
             {
                 if (String.IsNullOrEmpty(App.UpdateList[i].Required))
                 {
-#if DEBUG
+
                     App.Log("Core.cs", 2, "main", "> moved " + App.UpdateList[i].FunctionName + " to queue");
-#endif
+
                     updateQueue.Add(App.UpdateList[i]);
                     App.UpdateList.RemoveAt(i);
                 }
             }
-#if DEBUG
+
             App.Log("Core.cs", 2, "main", "  finished updates without requirements. " + App.UpdateList.Count.ToString() + " remain");
-#endif
+
             while (App.UpdateList.Count > 0)
             {
                 for(int i = 0; i < App.UpdateList.Count; i++)
@@ -449,9 +461,9 @@ namespace AGKCore
 
                     if(okCount == reqCount)
                     {
-#if DEBUG
+
                         App.Log("Core.cs", 2, "main", "> moved " + App.UpdateList[i].FunctionName + " to queue");
-#endif
+
                         updateQueue.Add(App.UpdateList[i]);
                         App.UpdateList.RemoveAt(i);
                         break;
@@ -460,9 +472,9 @@ namespace AGKCore
             }
 
             App.UpdateList = new List<UpdateHandler>(updateQueue);
-#if DEBUG
+
             App.Log("Core.cs", 2, "main", "End sorting update queue");
-#endif     
+     
         }
 
     }

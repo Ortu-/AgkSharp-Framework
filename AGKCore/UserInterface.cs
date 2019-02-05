@@ -22,9 +22,9 @@ namespace AGKCore.UI
 
         public UserInterface()
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 2, "main", "> Begin Init UI");
-#endif
+
             Dispatcher.Add(UserInterface.UpdatePageFlow);
             App.UpdateList.Add(new UpdateHandler("UserInterface.UpdatePageFlow", null, true));
 
@@ -43,9 +43,9 @@ namespace AGKCore.UI
 
             Status.MouseMode = "gameplay";
             Status.KeyMode = "gameplay";
-#if DEBUG
+
             App.Log("UserInterface.cs", 2, "main", "> End Init UI");
-#endif
+
         }
 
         public static void LoadPartial(string rFile)
@@ -146,9 +146,9 @@ namespace AGKCore.UI
 
         public static void ResetResolvedStyleProps()
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> Begin ResetResolvedStyleProps");
-#endif
+
             ElementList[0].IsDirty = false; //skip root element
 
             if (UserInterface.ElementDrag.DragElement != null)
@@ -177,16 +177,16 @@ namespace AGKCore.UI
 
             //root element is always = app window dimensions and provides context for all child %
             ElementList[0].ResolvedStyle.ResolveAsScreen();
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> End ResetResolvedStyleProps");
-#endif
+
         }
 
         public static void UpdatePageFlow(object rArgs)
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> Begin UpdatePageFlow");
-#endif
+
             int dirtyCount = 0;
             if(ElementList.Count == 0)
             {
@@ -235,9 +235,9 @@ namespace AGKCore.UI
                         }
                         ElementList[(int)iElementIndex].ResolvedStyle.ApplyStyleProps(ElementList[(int)iElementIndex].Style);
                         ElementList[(int)iElementIndex].ResolvedStyle.ResolveFlowValues();
-#if DEBUG
+
                         App.Log("UserInterface.cs", 1, "ui", "  resolved " + ElementList[(int)iElementIndex].Id + " " + ElementList[(int)iElementIndex].ResolvedStyle._FinalX + "," + ElementList[(int)iElementIndex].ResolvedStyle._FinalY + " : " + ElementList[(int)iElementIndex].ResolvedStyle._FinalW + "," + ElementList[(int)iElementIndex].ResolvedStyle._FinalH);
-#endif
+
                     }
                 }
             }
@@ -276,9 +276,9 @@ namespace AGKCore.UI
                             //TODO: handle overflow and repeat
                             if (String.IsNullOrEmpty(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage))
                             {
-#if DEBUG
+
                                 App.Log("UserInterface.cs", 1, "ui", "  no backgroundImage, make a color image");
-#endif
+
                                 //no image, make color
                                 var tColor = Media.MakeColorImage((uint)finalW, (uint)finalH, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, ElementList[(int)iElementIndex].ResolvedStyle.BackgroundColor, 1);
                                 ElementList[(int)iElementIndex].Style.SetProp("background-image", tColor.File);
@@ -305,9 +305,9 @@ namespace AGKCore.UI
                                 tImg = Media.GetImageAsset(ElementList[(int)iElementIndex].ResolvedStyle.BackgroundImage, 1.0f, 1.0f);
                                 if (!Agk.IsSpriteExists(iElementIndex))
                                 {
-#if DEBUG
+
                                     App.Log("UserInterface.cs", 1, "ui", $"  no sprite for background. make a sprite {iElementIndex.ToString()}");
-#endif
+
                                     Agk.CreateSprite(iElementIndex, tImg.Number);
                                 }
                                 Agk.SetSpriteImage(iElementIndex, tImg.Number);
@@ -345,9 +345,9 @@ namespace AGKCore.UI
                         {
                             if (!Agk.IsTextExists(iElementIndex))
                             {
-#if DEBUG
+
                                 App.Log("UserInterface.cs", 1, "ui", $"  no text for element {iElementIndex.ToString()}. make a text");
-#endif
+
                                 Agk.CreateText(iElementIndex, ElementList[(int)iElementIndex].Value);
                             }
                             switch(ElementList[(int)iElementIndex].ResolvedStyle.TextTransform.ToLower())
@@ -419,9 +419,9 @@ namespace AGKCore.UI
                     ++dirtyCount;
                 }
             }
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> End UpdatePageFlow");
-#endif
+
         }
 
         public static void GetInterfaceInput(object rArgs)
@@ -969,9 +969,9 @@ namespace AGKCore.UI
 
         public void SetProp(string rProp, string rValue)
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "- SetProp " + rProp + ": " + rValue);
-#endif
+
             try
             {
                 //styleClass owner won't have this.
@@ -1235,9 +1235,9 @@ namespace AGKCore.UI
 
         public void ApplyInheritedStyleProps()
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> Begin ApplyInheritedStyleProps");
-#endif
+
             //this should be applied to element.ResolvedStyle
             Display = Owner.ResolvedStyle.Display;
             Opacity = Owner.ResolvedStyle.Opacity;
@@ -1252,16 +1252,16 @@ namespace AGKCore.UI
             TextAlignH = Owner.ResolvedStyle.TextAlignH;
             TextAlignV = Owner.ResolvedStyle.TextAlignV;
             Rotation = Owner.ResolvedStyle.Rotation;
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> End ApplyInheritedStyleProps");
-#endif
+
         }
 
         public void ApplyStyleProps(StylePropertyData rSource)
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> Begin ApplyStyleProps");
-#endif
+
             //this should be applied to element.ResolvedStyle
             //Flow props
             if (Data.GetBit((int)UI.FlowPropBit.PositionAlignH, rSource._FlowPropertyEnabled) == 1)
@@ -1434,16 +1434,16 @@ namespace AGKCore.UI
             {
                 Rotation = rSource.Rotation;
             }
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> End ApplyStyleProps");
-#endif
+
         }
 
         public void ResolveFlowValues()
         {
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> Begin ResolveFlowValues");
-#endif
+
             //this should be applied to element.ResolvedStyle
             //if position is absolute, use root values as parent values;
             UI.Element parent;
@@ -1741,9 +1741,9 @@ namespace AGKCore.UI
             }
 
             _IsResolved = true;
-#if DEBUG
+
             App.Log("UserInterface.cs", 1, "ui", "> End ResolveFlowValues");
-#endif
+
         }
     }
 

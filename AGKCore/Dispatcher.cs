@@ -23,9 +23,9 @@ namespace AGKCore
 
         public static object Invoke(string rCallable, string rArgs)
         {
-#if DEBUG
+
             App.Log("Dispatcher.cs", 1, "main", "Dispatcher Invoke: " + rCallable + " found ? " + _FunctionList.FirstOrDefault(el => el.Name == rCallable).Name);
-#endif
+
             return _FunctionList.FirstOrDefault(el => el.Name == rCallable).Function.DynamicInvoke(rArgs);
         }
     }
