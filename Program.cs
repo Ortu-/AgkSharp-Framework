@@ -65,12 +65,7 @@ namespace AgkSharp_Template
 
             Dispatcher.Add(App.DoStuff);
 
-            /*
-            UI.UserInterface.ElementDrag.DragElement = tElement;
-            UI.UserInterface.ElementDrag.IsActive = true;
-            UI.UserInterface.ElementDrag.OffsetX = 30;
-            UI.UserInterface.ElementDrag.OffsetY = 40;
-            */
+            AnimationHandler.LoadAnimation("media/characters/test.anim");
 
 
             var testMark = App.Timing.Timer;
