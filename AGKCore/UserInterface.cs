@@ -310,14 +310,12 @@ namespace AGKCore.UI
                                 if (!Agk.IsSpriteExists(iElementIndex))
                                 {
 
-                                    App.Log("UserInterface.cs", 1, "ui", $"  no sprite for background. make a sprite {iElementIndex.ToString()}");
+                                    App.Log("UserInterface.cs", 1, "ui", $"  no sprite for background. make a sprite {(iElementIndex).ToString()}");
 
                                     Agk.CreateSprite(iElementIndex, tImg.Number);
                                 }
                                 Agk.SetSpriteImage(iElementIndex, tImg.Number);
                             }
-
-                            //Agk.SetSpriteImage(iElementIndex, tImg.Number);
                             Agk.SetSpriteScale(iElementIndex, contentW / Agk.GetImageWidth(tImg.Number), contentH / Agk.GetImageHeight(tImg.Number));
                             Agk.SetSpritePosition(iElementIndex, contentX, contentY);
                             Agk.SetSpriteColorAlpha(iElementIndex, (int)(iElement.ResolvedStyle.BackgroundOpacity * 0.01 * 255));

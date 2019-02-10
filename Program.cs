@@ -27,15 +27,15 @@ namespace AgkSharp_Template
             }
 
             //init modules
-            var _ah = new AnimationHandler();
-            var _ui = new UI.UserInterface();
-            UI.UserInterface.ControllerList.Add(new UI.CommonController());
-            UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
-            UI.UserInterface.PreloadImages();
+            new AnimationHandler();
+            new EntityHandler();
+            new UI.UserInterface();
+                UI.UserInterface.ControllerList.Add(new UI.CommonController());
+                UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
+                UI.UserInterface.PreloadImages();
 
             //clean up
             UpdateHandler.SortUpdateList();
-
 
             App.Log("Program.cs", 3, "main", "> Init Complete");
 
@@ -50,6 +50,7 @@ namespace AgkSharp_Template
             tElement.SetParent("root");
             UI.UserInterface.ElementList.Add(tElement);
 
+            /*
             tElement = new UI.Element();
             tElement.Id = "balloon";
             tElement.Style.SetProp("width", "60px");
@@ -62,14 +63,28 @@ namespace AgkSharp_Template
             tElement.HoldMouseFocus = true;
             tElement.OnPress = "App.DoStuff";
             UI.UserInterface.ElementList.Add(tElement);
-
+            */
             Dispatcher.Add(App.DoStuff);
 
-            AnimationHandler.LoadAnimation("media/characters/test.anim");
-
-
-            var testMark = App.Timing.Timer;
-
+            var tEntity = new Entity();
+            tEntity.IsObject = false;
+            tEntity.Position.X = 50;
+            tEntity.Position.Y = 100; ;
+            ImageAsset tImg = Media.GetImageAsset("media/characters/balloon0.png", 1.0f, 1.0f);
+            tEntity.ResourceNumber = Agk.CreateSprite(tImg.Number);
+            Agk.AddSpriteAnimationFrame(tEntity.ResourceNumber, Media.GetImageAsset("media/characters/balloon1.png", 1.0f, 1.0f).Number);
+            Agk.AddSpriteAnimationFrame(tEntity.ResourceNumber, Media.GetImageAsset("media/characters/balloon2.png", 1.0f, 1.0f).Number);
+            Agk.AddSpriteAnimationFrame(tEntity.ResourceNumber, Media.GetImageAsset("media/characters/balloon3.png", 1.0f, 1.0f).Number);
+            Agk.AddSpriteAnimationFrame(tEntity.ResourceNumber, Media.GetImageAsset("media/characters/balloon4.png", 1.0f, 1.0f).Number);
+            var animSet = AnimationHandler.GetAnimationSet("media/characters/balloon.anim");
+            var tAnim = new AppliedAnimation(tEntity, animSet, "0000L")
+            {
+                IsLoop = true
+            };
+            tEntity.AnimationQ.Add(tAnim);
+            EntityHandler.EntityList.Add(tEntity);
+            Agk.SetSpritePosition(tEntity.ResourceNumber, tEntity.Position.X, tEntity.Position.Y);
+            
             while (App.LoopAGK())
             {
 

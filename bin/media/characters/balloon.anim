@@ -1,0 +1,10 @@
+[
+	{
+		"desc": "passive-idle-stationary-standard",
+		"name": "0000L",
+		"framerate": 5,
+		"keys": [
+			[1, 4]
+		]
+	}
+]

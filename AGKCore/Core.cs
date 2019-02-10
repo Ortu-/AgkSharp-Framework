@@ -20,7 +20,7 @@ namespace AGKCore
 
         public static AppConfig Config;
         public static AppStatus Status;
-        public static TimingStatus Timing;
+        public static TimingStatus Timing = new TimingStatus();
         public static List<UpdateHandler> UpdateList = new List<UpdateHandler>();
 
         [DllImport("user32.dll", SetLastError = true)]
@@ -159,9 +159,7 @@ namespace AGKCore
         }
 
         public static bool Init(string[] args, string title)
-        {
-            //Dispatcher.Add(App.Log);
-            
+        {   
             App.Status.LoadState = 1;
             App.Status.LoadStage = 1;
 
@@ -241,14 +239,17 @@ namespace AGKCore
             System.IO.File.WriteAllText(App.Config.Log.File, "Timestamp    | File                     | Level | Channel    | Log" + Environment.NewLine);
             System.IO.File.AppendAllText(App.Config.Log.File, "==================================================================" + Environment.NewLine);
 
+            App.Timing.Timer = Agk.GetMilliseconds();
+
             App.Status.IsRunning = true;
             return true;
         }
 
         public static void UpdateTiming()
         {
+            uint oldTime = App.Timing.Timer;
             App.Timing.Timer = Agk.GetMilliseconds();
-            App.Timing.Delta = (uint)Agk.Abs(App.Timing.Timer - App.Timing.Delta);
+            App.Timing.Delta = App.Timing.Timer - oldTime;
 
             int oldPause = App.Timing.PauseState;
             if(App.Timing.PauseHold == 0)
@@ -293,26 +294,10 @@ namespace AGKCore
             {
                 if(App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
                 {
-                    /*
-                    StackTrace st = new StackTrace(true);
-                    if (st != null)
-                    {
-                        string source = st.GetFrame(1).GetMethod().Name;
-                        rSource = st.GetFrame(1).GetFileName() + " " + st.GetFrame(1).GetFileLineNumber().ToString();
-                    }
-                    */
                     System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
                 }
             }
         }
-
-        /*
-        public static void Log(object rArgs)
-        {
-            dynamic a = JsonConvert.DeserializeObject<dynamic>(rArgs.ToString());
-            Log(a.Source.ToString(), (int)a.Level, a.Channel.ToString(), a.Content.ToString());
-        }
-        */
 
         public static void StopRunning(bool rError)
         {
@@ -377,7 +362,7 @@ namespace AGKCore
         public int LoadType; //0 not loading | 1 title load | 2 level load	
     }
 
-    public struct TimingStatus
+    public class TimingStatus
     {
         public uint Timer;
         public uint Delta;
