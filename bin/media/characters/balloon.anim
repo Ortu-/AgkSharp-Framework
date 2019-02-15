@@ -1,10 +1,98 @@
 [
 	{
-		"desc": "passive-idle-stationary-standard",
+		"desc": "basic-idle-stationary-standard",
 		"name": "0000L",
 		"framerate": 5,
 		"keys": [
-			[1, 4]
+			[1, 5]
+		]
+	},
+	{
+		"desc": "basic-moving-normal-up",
+		"name": "0110I",
+		"framerate": 5,
+		"keys": [
+			[6, 6]
+		]
+	},
+	{
+		"name": "0110L",
+		"framerate": 5,
+		"keys": [
+			[6, 10]
+		]
+	},
+	{
+		"name": "0110O",
+		"framerate": 5,
+		"keys": [
+			[10, 10]
+		]
+	},
+	{
+		"desc": "basic-moving-normal-right",
+		"name": "0111I",
+		"framerate": 5,
+		"keys": [
+			[16, 16]
+		]
+	},
+	{
+		"name": "0111L",
+		"framerate": 5,
+		"keys": [
+			[16, 20]
+		]
+	},
+	{
+		"name": "0111O",
+		"framerate": 5,
+		"keys": [
+			[20, 20]
+		]
+	},
+	{
+		"desc": "basic-moving-normal-left",
+		"name": "0112I",
+		"framerate": 5,
+		"keys": [
+			[21, 21]
+		]
+	},
+	{
+		"name": "0112L",
+		"framerate": 5,
+		"keys": [
+			[21, 25]
+		]
+	},
+	{
+		"name": "0112O",
+		"framerate": 5,
+		"keys": [
+			[25, 25]
+		]
+	},
+	{
+		"desc": "basic-moving-normal-down",
+		"name": "0113I",
+		"framerate": 5,
+		"keys": [
+			[11, 11]
+		]
+	},
+	{
+		"name": "0113L",
+		"framerate": 5,
+		"keys": [
+			[11, 15]
+		]
+	},
+	{
+		"name": "0113O",
+		"framerate": 5,
+		"keys": [
+			[15, 15]
 		]
 	}
 ]
