@@ -166,8 +166,8 @@ namespace AGKCore
             //config defaults
             App.Config.Log.Level = 3;
             App.Config.Log.File = System.AppDomain.CurrentDomain.BaseDirectory + "app.log";
-            //App.Config.Log.Channels = "*";
-            App.Config.Log.Channels = "|!|error|main|ui|";
+            App.Config.Log.Channels = "*";
+            //App.Config.Log.Channels = "|!|error|main|ui|";
 
             App.Config.Screen.Fullscreen = true;
             App.Config.Screen.Width = 0;
@@ -409,7 +409,7 @@ namespace AGKCore
         public static void SortUpdateList()
         {
 
-            App.Log("Core.cs", 2, "main", "Begin sorting update queue");
+            App.Log("Core.cs", 2, "main", "Begin sorting update queue " + App.UpdateList.Count.ToString());
             
             var updateQueue = new List<UpdateHandler>();
             for (int i = App.UpdateList.Count - 1; i >= 0; i--)
@@ -428,18 +428,23 @@ namespace AGKCore
 
             while (App.UpdateList.Count > 0)
             {
-                for(int i = 0; i < App.UpdateList.Count; i++)
+                App.Log("Core.cs", 1, "main", "  " + App.UpdateList.Count.ToString() + " remain");
+                for (int i = 0; i < App.UpdateList.Count; i++)
                 {
+                    App.Log("Core.cs", 1, "main", "   Checking " + App.UpdateList[i].FunctionName);
                     var req = App.UpdateList[i].Required.Split(',');
                     int okCount = 0;
                     int reqCount = req.Length;
-                    foreach(var r in req)
+                    foreach (var r in req)
                     {
-                        foreach(var u in updateQueue)
+                        App.Log("Core.cs", 1, "main", "   requires " + r);
+                        foreach (var u in updateQueue)
                         {
-                            if(u.FunctionName == r)
+                            App.Log("Core.cs", 1, "main", "   is ? " + u.FunctionName);
+                            if (u.FunctionName == r)
                             {
                                 ++okCount;
+                                App.Log("Core.cs", 1, "main", "   found " + okCount.ToString() + "/" + reqCount.ToString());
                             }
                         }
                     }

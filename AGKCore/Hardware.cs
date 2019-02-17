@@ -70,5 +70,14 @@ namespace AGKCore
             Input[e.KeyValue] = Data.SetBit(1, Input[e.KeyValue], 0);
         }
 
+        public static bool IsKeyDown(int keyValue)
+        {
+            return Data.GetBit(1, Input[keyValue]) == 1;
+        }
+
+        public static bool WasKeyDown(int keyValue)
+        {
+            return Data.GetBit(2, Input[keyValue]) == 1;
+        }
     }
 }

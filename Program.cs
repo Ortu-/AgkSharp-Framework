@@ -24,6 +24,7 @@ namespace AgkSharp_Template
             //init modules
             new AnimationHandler();
             new CharacterHandler2d();
+            new Controls2d();
             new UI.UserInterface();
                 UI.UserInterface.ControllerList.Add(new UI.CommonController());
                 UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
@@ -50,13 +51,6 @@ namespace AgkSharp_Template
             var tEntity = new CharacterEntity2d("media/characters/balloon", 60, 88);
             tEntity.Properties.Position.X = 50;
             tEntity.Properties.Position.Y = 100;
-            Agk.SetSpritePosition(tEntity.Properties.ResourceNumber, tEntity.Properties.Position.X, tEntity.Properties.Position.Y);
-            var animSet = AnimationHandler.GetAnimationSet("media/characters/balloon.anim");
-            var tAnim = new AppliedAnimation(tEntity, animSet, "0113L")
-            {
-                IsLoop = true
-            };
-            tEntity.AnimationQ.Add(tAnim);
             CharacterHandler2d.MyCharacter = tEntity;
             
             

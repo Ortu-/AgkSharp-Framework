@@ -20,6 +20,7 @@ namespace AGKCore
         public class EntityProperties
         {
             public uint ResourceNumber;
+            public string Filebase;
             public AGKVector3 Position = new AGKVector3();
             public float Facing;
             public float Heading;

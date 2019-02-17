@@ -78,6 +78,11 @@ namespace AGKCore
         {
             Owner = rObject;
             Animation = rAnimSet.Animations.FirstOrDefault(a => a.Name == rName);
+            if(Animation == null)
+            {
+                App.Log("animation.cs", 4, "error", "adding " + rName + " from " + JsonConvert.SerializeObject(rAnimSet));
+                App.StopRunning(true);
+            }
         }
 
         public bool Update()
@@ -99,14 +104,14 @@ namespace AGKCore
                     //handle frame, looping
                     _CurrentFrame = firstFrame;
 
-                    if (Owner.IsObject)
+                    if (Owner.Properties.IsObject)
                     {
-                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                        Agk.SetObjectAnimationFrame((uint)Owner.ResourceNumber, "", animTime, 0.0f);
+                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                     }
                     else
                     {
-                        Agk.SetSpriteFrame((uint)Owner.ResourceNumber, (int)_CurrentFrame);
+                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
                     }
 
                     //handle variant
@@ -137,14 +142,14 @@ namespace AGKCore
                     //handle frame, played once, end it
                     _CurrentFrame = lastFrame;
 
-                    if (Owner.IsObject)
+                    if (Owner.Properties.IsObject)
                     {
-                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                        Agk.SetObjectAnimationFrame((uint)Owner.ResourceNumber, "", animTime, 0.0f);
+                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                     }
                     else
                     {
-                        Agk.SetSpriteFrame((uint)Owner.ResourceNumber, (int)_CurrentFrame);
+                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
                     }
 
                     //handle callback
@@ -158,14 +163,14 @@ namespace AGKCore
             else
             {
                 //handle frame, sequence hasnt completed, continue
-                if (Owner.IsObject)
+                if (Owner.Properties.IsObject)
                 {
-                    float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                    Agk.SetObjectAnimationFrame((uint)Owner.ResourceNumber, "", animTime, 0.0f);
+                    float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                    Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                 }
                 else
                 {
-                    Agk.SetSpriteFrame((uint)Owner.ResourceNumber, (int)_CurrentFrame);
+                    Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
                 }
 
                 //handle callback

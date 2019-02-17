@@ -71,6 +71,7 @@
     <Compile Include="AGKCore\Data.cs" />
     <Compile Include="AGKCore\Core.cs" />
     <Compile Include="AGKCore\Hardware.cs" />
+    <Compile Include="AGKProject\Controls2d.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="AGKProject\CharacterEntity2d.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
