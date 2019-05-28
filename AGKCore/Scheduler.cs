@@ -30,19 +30,21 @@ namespace AGKCore
 
         public static void TickInterval(object sender)
         {
-            if(App.Timing.PauseState == 1)
+
+            if (App.Timing.PauseState == 1)
             {
                 return;
             }
 
             TimerState ts = (TimerState)sender;
             var i = Scheduled.IndexOf(ts);
+
             ++Scheduled[i].DoneTicks;
             ts.LastTick = App.Timing.Timer;
-
+                
             if (App.Timing.PauseState == 2)
             {
-                if(App.Timing.Timer < ts.LastTick + ts.Interval + App.Timing.PauseElapsed)
+                if (App.Timing.Timer < ts.LastTick + ts.Interval + App.Timing.PauseElapsed)
                 {
                     return;
                 }

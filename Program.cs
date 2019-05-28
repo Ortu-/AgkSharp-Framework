@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Linq;
 using UI = AGKCore.UI;
 using AGKProject;
+using System.Windows.Forms;
 
 namespace AgkSharp_Template
 {
@@ -13,6 +14,8 @@ namespace AgkSharp_Template
         [STAThread]
         static void Main(string[] args)
         {
+            #region boilerplate init region
+
             var attrs = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false).FirstOrDefault() as AssemblyTitleAttribute;
 
             //init Agk
@@ -22,9 +25,17 @@ namespace AgkSharp_Template
             }
 
             //init modules
+            new Hardware();
+            new Media();
             new AnimationHandler();
-            new CharacterHandler2d();
-            new Controls2d();
+
+            //new CharacterHandler2d();
+            //new Controls2d();
+
+            new World3d();
+            new Controls3d();
+            new Camera3dHandler();
+
             new UI.UserInterface();
                 UI.UserInterface.ControllerList.Add(new UI.CommonController());
                 UI.UserInterface.ControllerList.Add(new UI.GameMenuController());
@@ -35,25 +46,30 @@ namespace AgkSharp_Template
 
             App.Log("Program.cs", 3, "main", "> Init Complete");
 
+            #endregion
+
             //TEMP setups
-            UI.Element tElement = new UI.Element();
-            tElement.Id = "sky-panel";
-            tElement.Style.SetProp("width", "320px");
-            tElement.Style.SetProp("height", "480px");
-            tElement.Style.SetProp("background-image", "media/background.jpg");
-            tElement.Style.SetProp("position-alignH", "center");
-            tElement.Style.SetProp("position-alignV", "center");
-            tElement.SetParent("root");
-            UI.UserInterface.ElementList.Add(tElement);
 
-            Dispatcher.Add(App.DoStuff);
+            var boxNum = Agk.CreateObjectBox(5.0f, 5.0f, 5.0f);
+            var boxEnt = new WorldEntity3d();
+            boxEnt.Properties.ResourceNumber = boxNum;
+            boxEnt.Properties.IsObject = true;
+            
+            var cam0 = new Camera3d("main");
+            cam0.UpdateFromAgk();
+            cam0.Anchor = boxEnt;
+            cam0.Target = boxEnt;
 
-            var tEntity = new CharacterEntity2d("media/characters/balloon", 60, 88);
-            tEntity.Properties.Position.X = 50;
-            tEntity.Properties.Position.Y = 100;
-            CharacterHandler2d.MyCharacter = tEntity;
-            
-            
+            var cam1 = new Camera3d("myOtherCam");
+            cam1.UpdateFromAgk();
+            cam1.Position.X = 10.0f;
+            cam1.Position.Y = 10.0f;
+            cam1.Position.Z = -40.0f;
+            cam1.ApplyToAgk();
+            Controls3d.ActiveCamera = cam1;
+
+            //ENDTEMP
+
             //App main
             while (App.LoopAGK())
             {
@@ -84,7 +100,13 @@ namespace AgkSharp_Template
                     break;
                 }
 
+
                 Agk.Print(Agk.ScreenFPS());
+                Agk.Print("Camera: " + Controls3d.ActiveCamera.Name);
+                Agk.Print(Controls3d.ActiveCamera.Position.X + ", " + Controls3d.ActiveCamera.Position.Y + ", " + Controls3d.ActiveCamera.Position.Z);
+                Agk.Print(Controls3d.ActiveCamera.Phi + ", " + Controls3d.ActiveCamera.Theta);
+                Agk.Print(Hardware.Mouse.MoveX.ToString() + ", " + Hardware.Mouse.MoveY.ToString());
+                Agk.Print("Press C to toggle active camera, Esc to quit");
 
                 Agk.Sync();
             }

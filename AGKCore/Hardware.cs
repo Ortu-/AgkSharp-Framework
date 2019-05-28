@@ -1,17 +1,20 @@
-﻿using System;
+﻿using AgkSharp;
+using System;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AGKCore
 {
-    public static class Hardware
+    public class Hardware
     {
-        public struct MouseInput
+        public class MouseInput
         {
             public float MoveX;
             public float MoveY;
             public float MoveZ;
             public int PosX;
             public int PosY;
+            public bool IsVisible = true;
         }
 
         public static MouseInput Mouse = new MouseInput();
@@ -32,6 +35,11 @@ namespace AGKCore
             }
         }
 
+        public Hardware()
+        {
+            Dispatcher.Add(Hardware.ResetMouseMove);
+        }
+
         public static void OnMouseDown(object sender, MouseEventArgs e)
         {
             Input[MouseEnum((int)e.Button)] = Data.SetBit(2, Input[MouseEnum((int)e.Button)], Data.GetBit(1, Input[MouseEnum((int)e.Button)]));
@@ -50,11 +58,43 @@ namespace AGKCore
             Mouse.MoveY = e.Y - Mouse.PosY;
             Mouse.PosX = e.X;
             Mouse.PosY = e.Y;
+
+            if (!Mouse.IsVisible)
+            {
+                Mouse.PosX = App.Config.Screen.CenterX;
+                Mouse.PosY = App.Config.Screen.CenterY;
+                Agk.SetRawMousePosition(App.Config.Screen.CenterX, App.Config.Screen.CenterY);
+            }
+
+            var st = Scheduler.Scheduled.FirstOrDefault(s => s.Name == "Hardware.ResetMouseMove");
+            if(st != null)
+            {
+                st.Timer.Dispose();
+                Scheduler.Scheduled.Remove(st);
+            }
+            
+            Scheduler.SetInterval(Hardware.ResetMouseMove, "", 1, 0, 200, "");
         }
 
         public static void OnMouseWheel(object sender, MouseEventArgs e)
         {
             Mouse.MoveZ = e.Delta;
+        }
+
+        public static void ResetMouseMove(object rArgs)
+        {
+            Mouse.MoveX = 0.0f;
+            Mouse.MoveY = 0.0f;
+            Mouse.MoveZ = 0.0f;
+        }
+
+        public static void SetMouseVisible(bool rVisible)
+        {
+            if ((rVisible && !Mouse.IsVisible) || (!rVisible && Mouse.IsVisible))
+            {
+                Agk.SetRawMouseVisible(rVisible);
+                Mouse.IsVisible = rVisible;
+            }                
         }
         
         public static void OnKeyDown(object sender, KeyEventArgs e)

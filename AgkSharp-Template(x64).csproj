@@ -61,6 +61,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AGKCore\Camera3d.cs" />
     <Compile Include="AGKCore\Entity.cs" />
     <Compile Include="AGKCore\Animation.cs" />
     <Compile Include="AGKCore\MathF.cs" />
@@ -71,9 +72,11 @@
     <Compile Include="AGKCore\Data.cs" />
     <Compile Include="AGKCore\Core.cs" />
     <Compile Include="AGKCore\Hardware.cs" />
-    <Compile Include="AGKProject\Controls2d.cs" />
+    <Compile Include="AGKProject\3d\Controls3d.cs" />
+    <Compile Include="AGKProject\3d\WorldEntity3d.cs" />
+    <Compile Include="AGKProject\2d\Controls2d.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="AGKProject\CharacterEntity2d.cs" />
+    <Compile Include="AGKProject\2d\CharacterEntity2d.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UIControllers\Common.cs" />
     <Compile Include="UIControllers\GameMenu.cs" />

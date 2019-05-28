@@ -18,10 +18,14 @@ namespace AGKCore
         static bool m_bMaximized = false;
         public static bool DisableEscape { get; set; } = false;
 
-        public static AppConfig Config;
-        public static AppStatus Status;
+        public static AppConfig Config = new AppConfig();
+        public static AppStatus Status = new AppStatus();
         public static TimingStatus Timing = new TimingStatus();
         public static List<UpdateHandler> UpdateList = new List<UpdateHandler>();
+
+        #region Boilerplate Region
+
+        public static object _threadLock = new object();
 
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool GetKeyboardState(byte[] lpKeyState);
@@ -32,6 +36,7 @@ namespace AGKCore
         [DllImport("user32.dll", SetLastError = true)]
         static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
         [DllImport("user32.dll", SetLastError = true)]
+
         static extern bool PostMessage(HandleRef hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
         public static Form CreateWindow(string title, int width, int height, bool fullscreen) => CreateWin32Window(title, width, height, fullscreen);
@@ -88,6 +93,21 @@ namespace AGKCore
 
             Agk.UpdateDeviceSize();
             Agk.WindowMoved();
+
+            App.Config.Screen.Width = m_Window.Width;
+            App.Config.Screen.Height = m_Window.Height;
+            App.Config.Screen.AspectRatio = App.Config.Screen.Width / App.Config.Screen.Height;
+            App.Config.Screen.CenterX = (int)Math.Floor(App.Config.Screen.Width * 0.5);
+            App.Config.Screen.CenterY = (int)Math.Floor(App.Config.Screen.Height * 0.5);
+
+            if (App.Config.Screen.Width > 1280)
+            {
+                App.Config.Screen.Layout = 1;
+            }
+            else
+            {
+                App.Config.Screen.Layout = 2;
+            }
         }
 
         static void Core_OnMove(object sender, EventArgs e)
@@ -158,6 +178,8 @@ namespace AGKCore
             Agk.CleanUp();
         }
 
+        #endregion
+
         public static bool Init(string[] args, string title)
         {   
             App.Status.LoadState = 1;
@@ -194,6 +216,7 @@ namespace AGKCore
             {
                 App.Config.Screen.Width = System.Windows.Forms.SystemInformation.PrimaryMonitorSize.Width;
                 App.Config.Screen.Height = System.Windows.Forms.SystemInformation.PrimaryMonitorSize.Height;
+                App.Config.Screen.AspectRatio = App.Config.Screen.Width / App.Config.Screen.Height;
             }
 
             App.Config.Screen.CenterX = (int)Math.Floor(App.Config.Screen.Width * 0.5);
@@ -294,7 +317,10 @@ namespace AGKCore
             {
                 if(App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
                 {
-                    System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
+                    lock (_threadLock)
+                    {
+                        System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(5) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
+                    }
                 }
             }
         }
@@ -326,13 +352,13 @@ namespace AGKCore
 
     }
 
-    public struct AppConfig
+    public class AppConfig
     {
         public LogConfig Log;
-        public ScreenConfig Screen;
+        public ScreenConfig Screen = new ScreenConfig();
     }
 
-    public struct ScreenConfig
+    public class ScreenConfig
     {
         public int Width;
         public int Height;
@@ -345,6 +371,7 @@ namespace AGKCore
         public int Layout;
         public bool Fullscreen;
         public bool Vsync;
+        public float AspectRatio;
     }
 
     public struct LogConfig
@@ -354,7 +381,7 @@ namespace AGKCore
         public string File;
     }
 
-    public struct AppStatus
+    public class AppStatus
     {
         public bool IsRunning;
         public int LoadState; //0 not loaded | 1 loading | 2 title loop (UI only) | 3 level load finished | 4 game in progress | 5 level reload/transition

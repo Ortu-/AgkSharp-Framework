@@ -69,8 +69,8 @@ namespace AGKCore
         public bool IsLoop = false;
         public string Callback;
         public string CallbackArgs;
+        public float CurrentFrame;
 
-        private float _CurrentFrame;
         private int _VariantMark;
         private int _VariantDelay;
 
@@ -85,33 +85,34 @@ namespace AGKCore
             }
         }
 
+
         public bool Update()
         {
             int firstFrame = Animation.Keys[Animation.CurrentKey][0];
             int lastFrame = Animation.Keys[Animation.CurrentKey][1];
 
-            _CurrentFrame = _CurrentFrame + (Animation.Framerate * Speed * (App.Timing.Delta * 0.001f));
+            CurrentFrame = CurrentFrame + (Animation.Framerate * Speed * (App.Timing.Delta * 0.001f));
 
-            if (_CurrentFrame < firstFrame)
+            if (CurrentFrame < firstFrame)
             {
-                _CurrentFrame = firstFrame;
+                CurrentFrame = firstFrame;
             }
 
-            if (_CurrentFrame >= lastFrame)
+            if (CurrentFrame >= lastFrame)
             {
                 if (IsLoop)
                 {
                     //handle frame, looping
-                    _CurrentFrame = firstFrame;
+                    CurrentFrame = firstFrame;
 
                     if (Owner.Properties.IsObject)
                     {
-                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                        float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
                         Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                     }
                     else
                     {
-                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
+                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)CurrentFrame);
                     }
 
                     //handle variant
@@ -140,16 +141,16 @@ namespace AGKCore
                 else
                 {
                     //handle frame, played once, end it
-                    _CurrentFrame = lastFrame;
+                    CurrentFrame = lastFrame;
 
                     if (Owner.Properties.IsObject)
                     {
-                        float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                        float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
                         Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                     }
                     else
                     {
-                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
+                        Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)CurrentFrame);
                     }
 
                     //handle callback
@@ -165,12 +166,12 @@ namespace AGKCore
                 //handle frame, sequence hasnt completed, continue
                 if (Owner.Properties.IsObject)
                 {
-                    float animTime = (_CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
+                    float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
                     Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
                 }
                 else
                 {
-                    Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)_CurrentFrame);
+                    Agk.SetSpriteFrame((uint)Owner.Properties.ResourceNumber, (int)CurrentFrame);
                 }
 
                 //handle callback

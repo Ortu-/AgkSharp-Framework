@@ -21,6 +21,11 @@ namespace AGKProject
 
         public static void GetGameplayInput(object rArgs)
         {
+            if(CharacterHandler2d.MyCharacter == null)
+            {
+                return;
+            }
+
             /*
             //exit early if main gameplay not in progress
             if(App.Status.LoadState < 3)

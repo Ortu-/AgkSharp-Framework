@@ -51,13 +51,13 @@ namespace AGKProject
 
             ImageAsset tSheet = Media.GetImageAsset(rFileBase + ".png", 1.0f, 1.0f);
             Agk.Swap();
-            var spSheet = Agk.CreateSprite(tSheet.Number);
+            var spSheet = Agk.CreateSprite(tSheet.ResourceNumber);
             Agk.SetSpritePosition(spSheet, 0.0f, 0.0f);
             Agk.Render();
             bool isFirst = true;
-            for(int row = 0; row < (Agk.GetImageHeight(tSheet.Number) / rHeight); row++)
+            for(int row = 0; row < (Agk.GetImageHeight(tSheet.ResourceNumber) / rHeight); row++)
             {
-                for (int col = 0; col < (Agk.GetImageWidth(tSheet.Number) / rWidth); col++)
+                for (int col = 0; col < (Agk.GetImageWidth(tSheet.ResourceNumber) / rWidth); col++)
                 {
                     var tImg = Agk.GetImage(col * rWidth, row * rHeight, rWidth, rHeight);
                     if (isFirst)

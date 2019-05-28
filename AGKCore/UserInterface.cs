@@ -294,11 +294,11 @@ namespace AGKCore.UI
                             {
                                 var imgList = iElement.ResolvedStyle.BackgroundImage.Split('|');
                                 tImg = Media.GetImageAsset(imgList[0], 1.0f, 1.0f);
-                                Agk.CreateSprite(iElementIndex, tImg.Number);
+                                Agk.CreateSprite(iElementIndex, tImg.ResourceNumber);
                                 for(int i = 1; i < imgList.Count(); i++)
                                 {
                                     var frame = Media.GetImageAsset(imgList[i], 1.0f, 1.0f);
-                                    Agk.AddSpriteAnimationFrame(iElementIndex, frame.Number);
+                                    Agk.AddSpriteAnimationFrame(iElementIndex, frame.ResourceNumber);
                                 }
                                 Agk.PlaySprite(iElementIndex, 10.0f, 1, 1, imgList.Count()); //TODO: add style prop to control speed
                                 iElement.Style.SetProp("background-image", imgList[0]);
@@ -312,11 +312,11 @@ namespace AGKCore.UI
 
                                     App.Log("UserInterface.cs", 1, "ui", $"  no sprite for background. make a sprite {(iElementIndex).ToString()}");
 
-                                    Agk.CreateSprite(iElementIndex, tImg.Number);
+                                    Agk.CreateSprite(iElementIndex, tImg.ResourceNumber);
                                 }
-                                Agk.SetSpriteImage(iElementIndex, tImg.Number);
+                                Agk.SetSpriteImage(iElementIndex, tImg.ResourceNumber);
                             }
-                            Agk.SetSpriteScale(iElementIndex, contentW / Agk.GetImageWidth(tImg.Number), contentH / Agk.GetImageHeight(tImg.Number));
+                            Agk.SetSpriteScale(iElementIndex, contentW / Agk.GetImageWidth(tImg.ResourceNumber), contentH / Agk.GetImageHeight(tImg.ResourceNumber));
                             Agk.SetSpritePosition(iElementIndex, contentX, contentY);
                             Agk.SetSpriteColorAlpha(iElementIndex, (int)(iElement.ResolvedStyle.BackgroundOpacity * 0.01 * 255));
                             Agk.SetSpriteDepth(iElementIndex, (int)iElement.ResolvedStyle.ZIndex);
@@ -468,16 +468,16 @@ namespace AGKCore.UI
                     }
                 }
             }
-
+            
             if (Status.MouseMode == "ui")
             {
-                Agk.SetRawMouseVisible(1);
+                Hardware.SetMouseVisible(true);
             }
             else
             {
-                Agk.SetRawMouseVisible(0);
+                Hardware.SetMouseVisible(false);
             }
-
+            
             if (!Status.InputReady)
             {
                 return;
