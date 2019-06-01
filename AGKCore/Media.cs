@@ -234,27 +234,30 @@ namespace AGKCore
         }
 
 
-        public static ShaderAsset GetShaderAsset(string rVsFile, string rPsFile)
+        public static ShaderAsset GetShaderAsset(string rVsFile, string rPsFile, bool rCanInstance)
         {
             App.Log("Media.cs", 2, "media", "Requested shader: " + rVsFile + " " + rPsFile);
 
-            foreach (var i in Media.ShaderList)
+            if (rCanInstance)
             {
-                if (i.VS == rVsFile && i.PS == rPsFile)
+                foreach (var i in Media.ShaderList)
                 {
-                    if (Agk.IsShaderExists(i.ResourceNumber))
+                    if (i.VS == rVsFile && i.PS == rPsFile)
                     {
-                        App.Log("Media.cs", 2, "media", " > found shader on " + i.ResourceNumber.ToString());
-                        return i;
-                    }
-                    else
-                    {
-                        App.Log("Media.cs", 2, "media", " > found shader on " + i.ResourceNumber.ToString() + "but is not valid: reload it");
-
-                        if (System.IO.File.Exists(rVsFile) && System.IO.File.Exists(rPsFile))
+                        if (Agk.IsShaderExists(i.ResourceNumber))
                         {
-                            i.ResourceNumber = Agk.LoadShader(rVsFile, rPsFile);
+                            App.Log("Media.cs", 2, "media", " > found shader on " + i.ResourceNumber.ToString());
                             return i;
+                        }
+                        else
+                        {
+                            App.Log("Media.cs", 2, "media", " > found shader on " + i.ResourceNumber.ToString() + "but is not valid: reload it");
+
+                            if (System.IO.File.Exists(rVsFile) && System.IO.File.Exists(rPsFile))
+                            {
+                                i.ResourceNumber = Agk.LoadShader(rVsFile, rPsFile);
+                                return i;
+                            }
                         }
                     }
                 }
@@ -417,9 +420,12 @@ namespace AGKCore
     {
         public string VS;
         public string PS;
+        public bool ReceiveDirectionalLight = true;
 
         public void UnloadAsset()
         {
+            //TODO: unset from any linked objects
+
             Media.ShaderList.Remove(this);
             Agk.DeleteShader(this.ResourceNumber);
         }

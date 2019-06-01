@@ -335,6 +335,16 @@ namespace AGKCore
             App.Status.IsRunning = false;
         }
 
+
+        public static void Sync()
+        {
+
+            Agk.Sync();
+        }
+
+
+
+
         public static void DoStuff(object rArgs)
         {
             var a = rArgs as Scheduler.TimerState;
@@ -348,7 +358,6 @@ namespace AGKCore
                 tElement.Style.SetProp("rotation", (tElement.Style.Rotation + 1).ToString());
             }
         }
-
 
     }
 

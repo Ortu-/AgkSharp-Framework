@@ -1,0 +1,53 @@
+[
+	{
+		"type": "element",
+		"tag": "div",
+		"id": "gameMenu",
+		"holdMouseFocus": "true",
+		"holdPause": "true",
+		"enableEvents": "2",
+		"keyBind": "27",
+		"onPress": "GameMenuController.MenuOnPress",
+		"style": {
+			"width": "100%",
+			"height": "100%",
+			"display": "hidden"
+		},
+		"children": [
+			{
+				"type": "element",
+				"tag": "button",
+				"id": "btn-resume",
+				"styleClass": "btn-text",
+				"name": "btn-text",
+				"value": "Resume",
+				"enableEvents": "1",
+				"onMouseIn": "CommonController.DoHoverByType",
+				"onMouseOut": "CommonController.DoUnHoverByType",
+				"onPress": "CommonController.DoPressByType",
+				"onRelease": "GameMenuController.ResumeOnPress",
+				"style": {
+					"position-alignV": "center",
+					"top": "-30px"
+				}
+			},
+			{
+				"type": "element",
+				"tag": "button",
+				"id": "btn-close",
+				"styleClass": "btn-text",
+				"name": "btn-text",
+				"value": "Quit",
+				"enableEvents": "1",
+				"onMouseIn": "CommonController.DoHoverByType",
+				"onMouseOut": "CommonController.DoUnHoverByType",
+				"onPress": "CommonController.DoPressByType",
+				"onRelease": "GameMenuController.QuitOnPress",
+				"style": {
+					"position-alignV": "center",
+					"top": "30px"
+				}
+			}
+		]
+	}
+]

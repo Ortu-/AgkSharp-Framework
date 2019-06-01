@@ -32,6 +32,7 @@ namespace AgkSharp_Template
             //new CharacterHandler2d();
             //new Controls2d();
 
+            new Devkit3d();
             new World3d();
             new Controls3d();
             new Camera3dHandler();
@@ -50,11 +51,28 @@ namespace AgkSharp_Template
 
             //TEMP setups
 
-            var boxNum = Agk.CreateObjectBox(5.0f, 5.0f, 5.0f);
+            var boxNum = Agk.CreateObjectBox(3.0f, 3.0f, 3.0f);
             var boxEnt = new WorldEntity3d();
             boxEnt.Properties.ResourceNumber = boxNum;
             boxEnt.Properties.IsObject = true;
+
+            //var fx = Media.GetShaderAsset("media/shaders/HelloWorld.vs", "media/shaders/HelloWorld.ps", true); //solid color, no lighting
+            //var fx = Media.GetShaderAsset("media/shaders/SurfaceColor.vs", "media/shaders/SurfaceColor.ps", true); //solid color, default lighting
+            //var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuse.vs", "media/shaders/SurfaceDiffuse.ps", true); //diffuse texture, default lighting
+            //var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuseClip.vs", "media/shaders/SurfaceDiffuseClip.ps"); //diffuse texture, default lighting, 1 bit alpha
+
+            Agk.SetSunActive(0);
+            Agk.SetAmbientColor(0, 0, 0);
+            var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuseClipLit.vs", "media/shaders/SurfaceDiffuseClipLit.ps", true); //diffuse texture, custom VS lighting, 1 bit alpha
+            boxEnt.SetShader(fx);
             
+
+            var tImg = Media.GetImageAsset("media/props/barrel01_d.png", 1.0f, 1.0f);
+            Agk.SetObjectImage(boxEnt.Properties.ResourceNumber, tImg.ResourceNumber, 0);
+
+
+            Agk.SetClearColor(52, 125, 217);
+
             var cam0 = new Camera3d("main");
             cam0.UpdateFromAgk();
             cam0.Anchor = boxEnt;
@@ -67,6 +85,8 @@ namespace AgkSharp_Template
             cam1.Position.Z = -40.0f;
             cam1.ApplyToAgk();
             Controls3d.ActiveCamera = cam1;
+
+            var colorMark = App.Timing.Timer;
 
             //ENDTEMP
 
@@ -100,15 +120,37 @@ namespace AgkSharp_Template
                     break;
                 }
 
+                /* TEMP - For SurfaceColor shader 
+                if (App.Timing.Timer - colorMark > 200)
+                {
+                    colorMark = App.Timing.Timer;
+                    Agk.SetShaderConstantByName(fx.ResourceNumber, "appliedColor", (Agk.Random(0, 255) / 255.0f), (Agk.Random(0, 255) / 255.0f), (Agk.Random(0, 255) / 255.0f), 0.0f);
+                }
+                */
+
+                
+                //TEMP - For SurfaceDiffuseClipLit - TODO we dont want to apply this every loop, only when lighting changes, also handle multiple lights
+                var dirLight = World3d.Celestials.First().LightProperties;
+                foreach (var s in Media.ShaderList)
+                {
+                    if (s.ReceiveDirectionalLight)
+                    {
+                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightDirection", dirLight.Direction.X, dirLight.Direction.Y, dirLight.Direction.Z, 0);
+                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightDiffuse", dirLight.Diffuse.R, dirLight.Diffuse.G, dirLight.Diffuse.B, 0);
+                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightAmbient", dirLight.Ambient.R, dirLight.Ambient.G, dirLight.Ambient.B, 0);
+                    }
+                }
+                
 
                 Agk.Print(Agk.ScreenFPS());
                 Agk.Print("Camera: " + Controls3d.ActiveCamera.Name);
-                Agk.Print(Controls3d.ActiveCamera.Position.X + ", " + Controls3d.ActiveCamera.Position.Y + ", " + Controls3d.ActiveCamera.Position.Z);
-                Agk.Print(Controls3d.ActiveCamera.Phi + ", " + Controls3d.ActiveCamera.Theta);
-                Agk.Print(Hardware.Mouse.MoveX.ToString() + ", " + Hardware.Mouse.MoveY.ToString());
-                Agk.Print("Press C to toggle active camera, Esc to quit");
+                Agk.Print("Cam Pos: " + Controls3d.ActiveCamera.Position.X + ", " + Controls3d.ActiveCamera.Position.Y + ", " + Controls3d.ActiveCamera.Position.Z);
+                Agk.Print("Cam P/T: " + Controls3d.ActiveCamera.Phi + ", " + Controls3d.ActiveCamera.Theta);
+                Agk.Print("Press C to toggle active camera");
+                Agk.Print("F1 to debug light");
+                Agk.Print("Esc to quit");
 
-                Agk.Sync();
+                App.Sync();
             }
 
             App.CleanUp();
