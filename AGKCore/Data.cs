@@ -132,6 +132,7 @@ namespace AGKCore
         {
             return ((JObject)rObject).Property(rProperty) != null;
         }
+
     }
 
     public struct ParsedSizeData

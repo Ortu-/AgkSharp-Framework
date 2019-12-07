@@ -25,6 +25,7 @@ namespace AGKCore
             public float Facing;
             public float Heading;
             public float Speed;
+            public float Mass;
             public bool IsObject;
         }
 

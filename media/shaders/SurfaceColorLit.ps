@@ -1,0 +1,10 @@
+
+varying mediump vec3 v_light;
+
+uniform mediump vec3 u_lightAmbient;
+uniform vec3 u_color;
+
+void main()
+{
+	gl_FragColor = vec4((u_lightAmbient + v_light) * u_color, 1.0);
+}

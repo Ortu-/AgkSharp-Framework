@@ -14,7 +14,8 @@ namespace AgkSharp_Template
         [STAThread]
         static void Main(string[] args)
         {
-            #region boilerplate init region
+            //--------------------------------------------
+            #region boilerplate inits
 
             var attrs = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false).FirstOrDefault() as AssemblyTitleAttribute;
 
@@ -27,15 +28,13 @@ namespace AgkSharp_Template
             //init modules
             new Hardware();
             new Media();
-            new AnimationHandler();
-
-            //new CharacterHandler2d();
-            //new Controls2d();
-
             new Devkit3d();
+            new AnimationHandler();
+            new CharacterHandler3d();
             new World3d();
             new Controls3d();
             new Camera3dHandler();
+            new ArcHandler();
 
             new UI.UserInterface();
                 UI.UserInterface.ControllerList.Add(new UI.CommonController());
@@ -45,48 +44,67 @@ namespace AgkSharp_Template
             //clean up
             UpdateHandler.SortUpdateList();
 
+            //init 3D physics
+            Agk.Create3DPhysicsWorld();
+
             App.Log("Program.cs", 3, "main", "> Init Complete");
 
             #endregion
+            //--------------------------------------------
 
             //TEMP setups
 
-            var boxNum = Agk.CreateObjectBox(3.0f, 3.0f, 3.0f);
-            var boxEnt = new WorldEntity3d();
-            boxEnt.Properties.ResourceNumber = boxNum;
-            boxEnt.Properties.IsObject = true;
+            var floorObj = Agk.CreateObjectBox(40.0f, 2.0f, 40.0f);
+            var floorEnt = new WorldEntity3d();
+            floorEnt.Properties.ResourceNumber = floorObj;
+            floorEnt.Properties.IsObject = true;
+            var floorFx = Media.GetShaderAsset("media/shaders/SurfaceColorLit.vs", "media/shaders/SurfaceColorLit.ps", true);
+            floorEnt.SetShader(floorFx);
+            Agk.SetShaderConstantByName(floorFx.ResourceNumber, "u_color", 0.8f, 0.8f, 0.8f, 0);
+            floorEnt.Properties.Position.Y = -1.0f;
+            World3d.WorldEntityList.Add(floorEnt);
+            Agk.Create3DPhysicsStaticBody(floorEnt.Properties.ResourceNumber);
 
-            //var fx = Media.GetShaderAsset("media/shaders/HelloWorld.vs", "media/shaders/HelloWorld.ps", true); //solid color, no lighting
-            //var fx = Media.GetShaderAsset("media/shaders/SurfaceColor.vs", "media/shaders/SurfaceColor.ps", true); //solid color, default lighting
-            //var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuse.vs", "media/shaders/SurfaceDiffuse.ps", true); //diffuse texture, default lighting
-            //var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuseClip.vs", "media/shaders/SurfaceDiffuseClip.ps"); //diffuse texture, default lighting, 1 bit alpha
+            /*
+            var ent = new WorldEntity3d();
+            var tObj = Media.LoadObjectAsset("media/characters/woman.dae", true, false, Guid.NewGuid().ToString());
+            Agk.SetObjectScalePermanent(tObj.ResourceNumber, 30.0f, 30.0f, 30.0f);
+            Agk.FixObjectPivot(tObj.ResourceNumber);
+            var tImg = Media.GetImageAsset("media/characters/woman_d.png", 1.0f, 1.0f);
+            Agk.SetObjectImage(tObj.ResourceNumber, tImg.ResourceNumber, 0);
+            tImg = Media.GetImageAsset("media/characters/woman_n.png", 1.0f, 1.0f);
+            Agk.SetObjectImage(tObj.ResourceNumber, tImg.ResourceNumber, 1);
+            tImg = Media.GetImageAsset("media/characters/woman_s.png", 1.0f, 1.0f);
+            Agk.SetObjectImage(tObj.ResourceNumber, tImg.ResourceNumber, 2);
+            ent.Properties.ResourceNumber = tObj.ResourceNumber;
+            ent.Properties.IsObject = true;
+            ent.Properties.Filebase = "media/characters/woman";
+            var wFx = Media.GetShaderAsset("media/shaders/SurfaceDiffSpec.vs", "media/shaders/SurfaceDiffSpec.ps", true);
+            ent.SetShader(wFx);
+            World3d.WorldEntityList.Add(ent);
+            */
 
-            Agk.SetSunActive(0);
-            Agk.SetAmbientColor(0, 0, 0);
-            var fx = Media.GetShaderAsset("media/shaders/SurfaceDiffuseClipLit.vs", "media/shaders/SurfaceDiffuseClipLit.ps", true); //diffuse texture, custom VS lighting, 1 bit alpha
-            boxEnt.SetShader(fx);
-            
+            //var tChar = new CharacterEntity3d("media/characters/automata");
+            var tChar = new CharacterEntity3d("media/characters/adventurer-carliet");
+            CharacterHandler3d.MyCharacter = tChar;
 
-            var tImg = Media.GetImageAsset("media/props/barrel01_d.png", 1.0f, 1.0f);
-            Agk.SetObjectImage(boxEnt.Properties.ResourceNumber, tImg.ResourceNumber, 0);
+            //Agk.SetObjectVisible(tChar.Properties.ResourceNumber, false);
 
-
-            Agk.SetClearColor(52, 125, 217);
 
             var cam0 = new Camera3d("main");
             cam0.UpdateFromAgk();
-            cam0.Anchor = boxEnt;
-            cam0.Target = boxEnt;
+            cam0.ControlMode = Camera3d.CameraMode.Anchored;
+            cam0.Anchor = floorEnt;
+            cam0.Target = floorEnt;
 
             var cam1 = new Camera3d("myOtherCam");
             cam1.UpdateFromAgk();
-            cam1.Position.X = 10.0f;
+            cam1.Position.X = 0.0f;
             cam1.Position.Y = 10.0f;
-            cam1.Position.Z = -40.0f;
+            cam1.Position.Z = -20.0f;
             cam1.ApplyToAgk();
-            Controls3d.ActiveCamera = cam1;
 
-            var colorMark = App.Timing.Timer;
+            Controls3d.SetActiveCamera(cam0);
 
             //ENDTEMP
 
@@ -98,6 +116,9 @@ namespace AgkSharp_Template
 
                 //Always update timing, and do it first
                 App.UpdateTiming();
+
+                //sync internal physics
+                Agk.Step3DPhysicsWorld();
 
                 App.Log("Program.cs", 1, "main", "Processing " + App.UpdateList.Count.ToString() + " updates in queue");
 
@@ -120,35 +141,30 @@ namespace AgkSharp_Template
                     break;
                 }
 
-                /* TEMP - For SurfaceColor shader 
-                if (App.Timing.Timer - colorMark > 200)
-                {
-                    colorMark = App.Timing.Timer;
-                    Agk.SetShaderConstantByName(fx.ResourceNumber, "appliedColor", (Agk.Random(0, 255) / 255.0f), (Agk.Random(0, 255) / 255.0f), (Agk.Random(0, 255) / 255.0f), 0.0f);
-                }
-                */
-
-                
-                //TEMP - For SurfaceDiffuseClipLit - TODO we dont want to apply this every loop, only when lighting changes, also handle multiple lights
-                var dirLight = World3d.Celestials.First().LightProperties;
-                foreach (var s in Media.ShaderList)
-                {
-                    if (s.ReceiveDirectionalLight)
-                    {
-                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightDirection", dirLight.Direction.X, dirLight.Direction.Y, dirLight.Direction.Z, 0);
-                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightDiffuse", dirLight.Diffuse.R, dirLight.Diffuse.G, dirLight.Diffuse.B, 0);
-                        Agk.SetShaderConstantByName(s.ResourceNumber, "dirLightAmbient", dirLight.Ambient.R, dirLight.Ambient.G, dirLight.Ambient.B, 0);
-                    }
-                }
-                
-
-                Agk.Print(Agk.ScreenFPS());
+                Agk.Print(Agk.ScreenFPS().ToString() + " " + App.Timing.Delta.ToString());
                 Agk.Print("Camera: " + Controls3d.ActiveCamera.Name);
                 Agk.Print("Cam Pos: " + Controls3d.ActiveCamera.Position.X + ", " + Controls3d.ActiveCamera.Position.Y + ", " + Controls3d.ActiveCamera.Position.Z);
                 Agk.Print("Cam P/T: " + Controls3d.ActiveCamera.Phi + ", " + Controls3d.ActiveCamera.Theta);
+                Agk.Print(CharacterHandler3d.MyCharacter.Properties.Position.AsString());
+                Agk.Print(CharacterHandler3d.MyCharacter.Properties.Heading.ToString() + " " + CharacterHandler3d.MyCharacter.Properties.Facing.ToString());
+                Agk.Print(CharacterHandler3d.MyCharacter.Properties.Speed.ToString());
+                
                 Agk.Print("Press C to toggle active camera");
                 Agk.Print("F1 to debug light");
                 Agk.Print("Esc to quit");
+
+                /*
+                var anim = CharacterHandler3d.MyCharacter.AnimationQ.First();
+                Agk.Print(anim.Animation.Name);
+                
+                string animName = Agk.GetObjectAnimationName((uint)anim.Owner.Properties.ResourceNumber, 1);
+                float totalTime = Agk.GetObjectAnimationDuration((uint)anim.Owner.Properties.ResourceNumber, animName);
+                int totalFrame = (int)Math.Floor(totalTime * anim.Animation.Framerate);
+                float animTime = (anim.CurrentFrame * totalTime) / totalFrame;
+
+                Agk.Print(Math.Floor((double)anim.CurrentFrame).ToString() + " / " + totalFrame.ToString());
+                Agk.Print(animTime.ToString("0.00") + " / " + totalTime.ToString("0.00"));
+                */
 
                 App.Sync();
             }

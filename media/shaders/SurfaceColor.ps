@@ -1,5 +1,5 @@
 
-uniform vec3 appliedColor;
+uniform vec3 u_color;
 
 varying highp vec3 posVarying;
 varying mediump vec3 normalVarying;
@@ -11,6 +11,6 @@ void main()
 {
 	mediump vec3 norm = normalize(normalVarying);
 	mediump vec3 light = lightVarying + GetPSLighting( norm, posVarying );
-	mediump vec3 color = appliedColor * light;
+	mediump vec3 color = u_color * light;
 	gl_FragColor = vec4(color,1.0);
 }

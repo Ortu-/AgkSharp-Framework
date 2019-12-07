@@ -8,6 +8,9 @@
     <RootNamespace>AgkSharp_Template</RootNamespace>
     <AssemblyName>Application</AssemblyName>
     <ProjectGuid>{3D74B415-143B-4F59-899B-668F0284BEAD}</ProjectGuid>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -20,11 +23,8 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.0</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-64|AnyCPU'">
     <OutputPath>bin\</OutputPath>
@@ -41,6 +41,8 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AgkSharp64, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
@@ -65,7 +67,8 @@
     <Compile Include="AGKCore\Camera3d.cs" />
     <Compile Include="AGKCore\Entity.cs" />
     <Compile Include="AGKCore\Animation.cs" />
-    <Compile Include="AGKCore\MathF.cs" />
+    <Compile Include="AGKCore\Physics.cs" />
+    <Compile Include="AGKCore\MathUtil.cs" />
     <Compile Include="AGKCore\UserInterface.cs" />
     <Compile Include="AGKCore\Media.cs" />
     <Compile Include="AGKCore\Dispatcher.cs" />
@@ -73,6 +76,7 @@
     <Compile Include="AGKCore\Data.cs" />
     <Compile Include="AGKCore\Core.cs" />
     <Compile Include="AGKCore\Hardware.cs" />
+    <Compile Include="AGKProject\3d\CharacterEntity3d.cs" />
     <Compile Include="AGKProject\3d\Devkit3d.cs" />
     <Compile Include="AGKProject\3d\Controls3d.cs" />
     <Compile Include="AGKProject\3d\World3d.cs" />
@@ -92,10 +96,19 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="media\characters\automata.anim">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="media\characters\automata.fbx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="media\characters\automata.x">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="media\characters\balloon.anim">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\props\matball.fbx">
+    <None Include="media\props\barrels.x">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="media\shaders\3dLine.ps">
@@ -104,34 +117,25 @@
     <None Include="media\shaders\3dLine.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\HelloWorld.ps">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="media\shaders\HelloWorld.vs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="media\shaders\SurfaceColor.ps">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="media\shaders\SurfaceColor.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\SurfaceDiffuse.ps">
+    <None Include="media\shaders\SurfaceColorLit.ps">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\SurfaceDiffuse.vs">
+    <None Include="media\shaders\SurfaceColorLit.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\SurfaceDiffuseClip.ps">
+    <None Include="media\shaders\SurfaceDiffSpec.ps">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\SurfaceDiffuseClip.vs">
+    <None Include="media\shaders\SurfaceDiffSpec.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="media\shaders\SurfaceDiffuseClipLit.ps">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="media\shaders\SurfaceDiffuseClipLit.vs">
+    <None Include="media\shaders\SurfaceDiffSpecBone.vs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="media\ui\partials\common.json">
@@ -167,7 +171,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="media\background.jpg">
+    <Content Include="media\characters\automata_d.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="media\characters\automata_n.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="media\characters\automata_s.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="media\characters\balloon.png">

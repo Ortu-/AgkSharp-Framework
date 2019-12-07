@@ -55,6 +55,8 @@ namespace AGKCore
                 App.Log("Media.cs", 2, "media", " > image not loaded: load it");
   
                 var tImg = Agk.LoadImageResized(rFilename, rScaleX, rScaleY, 0);
+                Agk.SetImageWrapU(tImg, 1);
+                Agk.SetImageWrapV(tImg, 1);
                 var i = new ImageAsset(){
                     ResourceNumber = tImg,
                     File = rFilename,
@@ -119,7 +121,7 @@ namespace AGKCore
 
 
 
-        public static ObjectAsset LoadObjectWithChildrenAsset(string rFilename, bool rCanInstance, string rID)
+        public static ObjectAsset LoadObjectAsset(string rFilename, bool rCanInstance, bool rHasBones, string rID)
         {
             App.Log("Media.cs", 2, "media", "Requested load object: " + rFilename + " " + rCanInstance.ToString() + " " + rID);
 
@@ -127,6 +129,7 @@ namespace AGKCore
             {
                 var tObj = new ObjectAsset();
                     tObj.File = rFilename;
+                    tObj.HasBones = rHasBones;
                     tObj.Id = String.IsNullOrEmpty(rID) ? Guid.NewGuid().ToString() : rID;
 
                 var sourceObject = Media.ObjectList.FirstOrDefault(o => o.File == rFilename && o.InstanceType == 0);
@@ -147,14 +150,29 @@ namespace AGKCore
                     }
                     else
                     {
-                        Agk.LoadObjectWithChildren(sourceObject.ResourceNumber, rFilename);
+                        if (rHasBones)
+                        {
+                            Agk.LoadObjectWithChildren(sourceObject.ResourceNumber, rFilename);
+                        }
+                        else
+                        {
+                            Agk.LoadObject(sourceObject.ResourceNumber, rFilename);
+                        }
                         sourceObject.Id = tObj.Id;
                         return sourceObject;
                     }
                 }
                 else
                 {
-                    tObj.ResourceNumber = Agk.LoadObjectWithChildren(rFilename);
+                    if (rHasBones)
+                    {
+                        tObj.ResourceNumber = Agk.LoadObjectWithChildren(rFilename);
+                    }
+                    else
+                    {
+                        tObj.ResourceNumber = Agk.LoadObject(rFilename);
+                    }
+                    
                     tObj.InstanceType = 0;
                 }
 
@@ -163,7 +181,7 @@ namespace AGKCore
             }
             else
             {
-                App.Log("Media", 4, "error", "ERROR: File not found: " + rFilename + " during Media_LoadObjectWithChildren.");
+                App.Log("Media", 4, "error", "ERROR: File not found: " + rFilename + " during Media_LoadObject.");
                 App.StopRunning(true);
                 return null;
             }
@@ -173,8 +191,16 @@ namespace AGKCore
         {
             foreach (var i in Media.ObjectList)
             {
-                //TODO: unload textures/shaders?
-                Agk.DeleteObjectWithChildren(i.ResourceNumber);
+                //TODO: unload/unlink textures/shaders?
+
+                if (i.HasBones)
+                {
+                    Agk.DeleteObjectWithChildren(i.ResourceNumber);
+                }
+                else
+                {
+                    Agk.DeleteObject(i.ResourceNumber);
+                }
             }
             Media.ObjectList.Clear();
         }
@@ -283,11 +309,14 @@ namespace AGKCore
                 {
                     //if filename does not include the media folder, we are looking for a generated shader from string, just return null and keep running
                     //if filename does include media folder, the file is not found and we got problems.
+                    System.Windows.Forms.MessageBox.Show("File not found: " + rVsFile + " " + rPsFile);
                     App.Log("Media.cs", 5, "error", "ERROR: File not found: " + rVsFile + ", " + rPsFile + " on Media.GetShaderAsset");
                     App.StopRunning(true);
                 }
             }
 
+            System.Windows.Forms.MessageBox.Show("File not found: " + rVsFile + " " + rPsFile);
+            App.StopRunning(true);
             return null;
         }
 
@@ -327,18 +356,33 @@ namespace AGKCore
         public uint InstanceType;
         public ObjectAsset Parent;
         public int BindMode;
+        public bool HasBones;
 
         public void UnloadAsset()
         {
             //TODO: unload textures/shaders?
             Media.ObjectList.Remove(this);
-            Agk.DeleteObjectWithChildren(this.ResourceNumber);
+            if (this.HasBones)
+            {
+                Agk.DeleteObjectWithChildren(this.ResourceNumber);
+            }
+            else
+            {
+                Agk.DeleteObject(this.ResourceNumber);
+            }
         }
 
         public void ReplaceAsset(string rFilename, bool rCanInstance)
         {
             //TODO: unload textures/shaders?
-            Agk.DeleteObjectWithChildren(this.ResourceNumber);
+            if (this.HasBones)
+            {
+                Agk.DeleteObjectWithChildren(this.ResourceNumber);
+            }
+            else
+            {
+                Agk.DeleteObject(this.ResourceNumber);
+            }
 
             if (System.IO.File.Exists(rFilename))
             {
@@ -362,19 +406,33 @@ namespace AGKCore
                     }
                     else
                     {
-                        Agk.LoadObjectWithChildren(sourceObject.ResourceNumber, rFilename);
+                        if (this.HasBones)
+                        {
+                            Agk.LoadObjectWithChildren(sourceObject.ResourceNumber, rFilename);
+                        }
+                        else
+                        {
+                            Agk.LoadObject(sourceObject.ResourceNumber, rFilename);
+                        }
                         sourceObject.Id = this.Id;
                     }
                 }
                 else
                 {
-                    this.ResourceNumber = Agk.LoadObjectWithChildren(rFilename);
+                    if (this.HasBones)
+                    {
+                        this.ResourceNumber = Agk.LoadObjectWithChildren(rFilename);
+                    }
+                    else
+                    {
+                        this.ResourceNumber = Agk.LoadObject(rFilename);
+                    }
                     this.InstanceType = 0;
                 }
             }
             else
             {
-                App.Log("Media", 4, "error", "ERROR: File not found: " + rFilename + " during Media_LoadObjectWithChildren.");
+                App.Log("Media", 4, "error", "ERROR: File not found: " + rFilename + " during Media_LoadObject.");
                 App.StopRunning(true);
             }
         }

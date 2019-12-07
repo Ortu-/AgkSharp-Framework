@@ -52,8 +52,8 @@ namespace AGKCore
     public class Animation
     {
         public string Name;
-        public int Framerate = 30;
-        public bool IsMoveEnabled = true;
+        public int Framerate = 24;
+        public bool Wait = false;
         public int CurrentKey = 0;
         public int VariantDelayMin = 15000;
         public int VariantDelayMax = 65000;
@@ -62,7 +62,7 @@ namespace AGKCore
 
     public class AppliedAnimation
     {
-        dynamic Owner;
+        public dynamic Owner;
 
         public Animation Animation;
         public float Speed = 1.0f;
@@ -80,7 +80,7 @@ namespace AGKCore
             Animation = rAnimSet.Animations.FirstOrDefault(a => a.Name == rName);
             if(Animation == null)
             {
-                App.Log("animation.cs", 4, "error", "adding " + rName + " from " + JsonConvert.SerializeObject(rAnimSet));
+                App.Log("animation.cs", 4, "error", "Could not add AppliedAnimation - Requested animation not present in AnimSet " + rName + " from " + JsonConvert.SerializeObject(rAnimSet));
                 App.StopRunning(true);
             }
         }
@@ -88,10 +88,20 @@ namespace AGKCore
 
         public bool Update()
         {
+            string animName = "";
+            float totalTime = 0;
+            if (Owner.Properties.IsObject)
+            {
+                //Agk.SetObjectAnimationSpeed((uint)Owner.Properties.ResourceNumber, )
+                animName = Agk.GetObjectAnimationName((uint)Owner.Properties.ResourceNumber, 1);
+                totalTime = Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, animName);
+            }
+
             int firstFrame = Animation.Keys[Animation.CurrentKey][0];
             int lastFrame = Animation.Keys[Animation.CurrentKey][1];
+            int totalFrame = (int)Math.Floor(totalTime * Animation.Framerate);
 
-            CurrentFrame = CurrentFrame + (Animation.Framerate * Speed * (App.Timing.Delta * 0.001f));
+            CurrentFrame = CurrentFrame + (Animation.Framerate * Speed * (App.Timing.Delta * 0.001f)); //convert to seconds
 
             if (CurrentFrame < firstFrame)
             {
@@ -107,8 +117,9 @@ namespace AGKCore
 
                     if (Owner.Properties.IsObject)
                     {
-                        float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
+                        //float animTime = (CurrentFrame * totalTime) / lastFrame;
+                        float animTime = (CurrentFrame * totalTime) / totalFrame;
+                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, animName, animTime, 0.0f);
                     }
                     else
                     {
@@ -145,8 +156,9 @@ namespace AGKCore
 
                     if (Owner.Properties.IsObject)
                     {
-                        float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
+                        //float animTime = (CurrentFrame * Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, animName)) / Animation.Keys[Animation.CurrentKey][1];
+                        float animTime = (CurrentFrame * totalTime) / totalFrame;
+                        Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, animName, animTime, 0.0f);
                     }
                     else
                     {
@@ -166,8 +178,9 @@ namespace AGKCore
                 //handle frame, sequence hasnt completed, continue
                 if (Owner.Properties.IsObject)
                 {
-                    float animTime = (CurrentFrame + Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, "")) / Animation.Keys[Animation.CurrentKey][1];
-                    Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, "", animTime, 0.0f);
+                    //float animTime = (CurrentFrame * Agk.GetObjectAnimationDuration((uint)Owner.Properties.ResourceNumber, animName)) / Animation.Keys[Animation.CurrentKey][1];
+                    float animTime = (CurrentFrame * totalTime) / totalFrame;
+                    Agk.SetObjectAnimationFrame((uint)Owner.Properties.ResourceNumber, animName, animTime, 0.0f);
                 }
                 else
                 {

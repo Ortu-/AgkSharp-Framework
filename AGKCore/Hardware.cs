@@ -19,6 +19,7 @@ namespace AGKCore
 
         public static MouseInput Mouse = new MouseInput();
         public static int[] Input = new int[255]; //bit 1 = isDown, bit 2 = wasDown
+        private static bool suppress = false;
         
         public static uint MouseEnum(int rBtn)
         {
@@ -54,6 +55,12 @@ namespace AGKCore
 
         public static void OnMouseMove(object sender, MouseEventArgs e)
         {
+            if (suppress)
+            {
+                suppress = false;
+                return;
+            }
+
             Mouse.MoveX = e.X - Mouse.PosX;
             Mouse.MoveY = e.Y - Mouse.PosY;
             Mouse.PosX = e.X;
@@ -61,6 +68,7 @@ namespace AGKCore
 
             if (!Mouse.IsVisible)
             {
+                suppress = true;
                 Mouse.PosX = App.Config.Screen.CenterX;
                 Mouse.PosY = App.Config.Screen.CenterY;
                 Agk.SetRawMousePosition(App.Config.Screen.CenterX, App.Config.Screen.CenterY);
@@ -69,16 +77,23 @@ namespace AGKCore
             var st = Scheduler.Scheduled.FirstOrDefault(s => s.Name == "Hardware.ResetMouseMove");
             if(st != null)
             {
-                st.Timer.Dispose();
                 Scheduler.Scheduled.Remove(st);
+                st.Timer.Dispose();
             }
-            
-            Scheduler.SetInterval(Hardware.ResetMouseMove, "", 1, 0, 200, "");
+            Scheduler.SetInterval(Hardware.ResetMouseMove, "", 1, 0, (int)App.Timing.Delta, "");
         }
 
         public static void OnMouseWheel(object sender, MouseEventArgs e)
         {
             Mouse.MoveZ = e.Delta;
+
+            var st = Scheduler.Scheduled.FirstOrDefault(s => s.Name == "Hardware.ResetMouseMove");
+            if (st != null)
+            {
+                Scheduler.Scheduled.Remove(st);
+                st.Timer.Dispose();
+            }
+            Scheduler.SetInterval(Hardware.ResetMouseMove, "", 1, 0, (int)App.Timing.Delta, "");
         }
 
         public static void ResetMouseMove(object rArgs)
@@ -118,6 +133,16 @@ namespace AGKCore
         public static bool WasKeyDown(int keyValue)
         {
             return Data.GetBit(2, Input[keyValue]) == 1;
+        }
+
+        public static bool IsKeyDown(Keys keyValue)
+        {
+            return Data.GetBit(1, Input[(int)keyValue]) == 1;
+        }
+
+        public static bool WasKeyDown(Keys keyValue)
+        {
+            return Data.GetBit(2, Input[(int)keyValue]) == 1;
         }
     }
 }

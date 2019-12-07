@@ -325,6 +325,21 @@ namespace AGKCore
             }
         }
 
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void Log(string rSource, LogLevel rLevel, string rChannel, string rContent)
+        {
+            if ((int)rLevel >= App.Config.Log.Level)
+            {
+                if (App.Config.Log.Channels == "*" || App.Config.Log.Channels.Contains("|" + rChannel + "|"))
+                {
+                    lock (_threadLock)
+                    {
+                        System.IO.File.AppendAllText(App.Config.Log.File, DateTime.Now.ToString("HH:mm:ss.fff") + " | " + rSource.PadRight(24) + " | " + rLevel.ToString().PadRight(10) + " | " + rChannel.PadRight(10) + " | " + rContent + Environment.NewLine);
+                    }
+                }
+            }
+        }
+
         public static void StopRunning(bool rError)
         {
             App.Log("Core.cs", 255, "!", "Program end. Error: " + rError.ToString());
@@ -445,7 +460,7 @@ namespace AGKCore
         public static void SortUpdateList()
         {
 
-            App.Log("Core.cs", 2, "main", "Begin sorting update queue " + App.UpdateList.Count.ToString());
+            App.Log("Core.cs", 2, "main", "> Begin sorting update queue " + App.UpdateList.Count.ToString());
             
             var updateQueue = new List<UpdateHandler>();
             for (int i = App.UpdateList.Count - 1; i >= 0; i--)
@@ -505,4 +520,12 @@ namespace AGKCore
 
     }
 
+    public enum LogLevel
+    {
+        Info = 1,
+        Notice = 2,
+        Warning = 3,
+        Error = 4,
+        Debug = 5
+    }
 }

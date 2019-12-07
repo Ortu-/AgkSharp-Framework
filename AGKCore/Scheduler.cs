@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
@@ -37,32 +38,33 @@ namespace AGKCore
             }
 
             TimerState ts = (TimerState)sender;
-            var i = Scheduled.IndexOf(ts);
-
-            ++Scheduled[i].DoneTicks;
+   
+            ++ts.DoneTicks;
             ts.LastTick = App.Timing.Timer;
-                
-            if (App.Timing.PauseState == 2)
+
+            if(App.Timing.PauseState == 2)
             {
-                if (App.Timing.Timer < ts.LastTick + ts.Interval + App.Timing.PauseElapsed)
+                if(App.Timing.Timer < ts.LastTick + ts.Interval + App.Timing.PauseElapsed)
                 {
                     return;
                 }
             }
 
-            bool isDone = Scheduled[i].MaxTicks > -1 && Scheduled[i].DoneTicks >= Scheduled[i].MaxTicks;
+            bool isDone = ts.MaxTicks > -1 && ts.DoneTicks >= ts.MaxTicks;
             if (isDone)
             {
-                Scheduled[i].Timer.Dispose();
+                Scheduled.Remove(ts);
+                ts.Timer.Dispose();
             }
 
-            Scheduled[i].Callback.DynamicInvoke(sender);
+            ts.Callback.DynamicInvoke(sender);
 
-            if (isDone)
+            /* TODO: we shouldn't need to maintain a reference in the list during the invoke call. we should be able to get anything we need out of sender
+            if (isDone && ts != null)
             {
-                i = Scheduled.IndexOf(ts); //list may have changed, have to relocate this timer before removing it.
-                Scheduled.RemoveAt(i);
+                Scheduled.Remove(ts);
             }
+            */
         }
 
         public class TimerState

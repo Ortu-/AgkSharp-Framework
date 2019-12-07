@@ -1,0 +1,50 @@
+#version 330
+
+uniform sampler2D texture0; //diffuse
+uniform sampler2D texture1; //normal
+uniform sampler2D texture2; //specular
+
+in vec3 v_position;
+in mat3 v_normal;
+in vec2 v_uvCoord;
+
+uniform vec4 u_lightAmbient;
+uniform vec4 u_lightDiffuse;
+uniform vec4 u_lightDirection;
+
+uniform float u_normalSize;
+uniform float u_specularPower;
+
+uniform vec3 agk_CameraPos;
+
+void main()
+{
+	//Alpha clipping
+	if (texture2D(texture0, v_uvCoord).a < 0.5) discard;
+
+	//Texture Diffuse
+	vec4 mapDiffuse = vec4(texture2D(texture0, v_uvCoord).rgb, 1.0);
+
+	//Texture Normal
+	vec3 mapNormal = texture2D(texture1, v_uvCoord).rgb * 2.0 - 1.0;
+	mapNormal.rg *= u_normalSize;
+	vec3 normal = v_normal * mapNormal;
+
+	//Lighting Diffuse
+	vec4 litDiffuse;
+	vec3 lightVector = normalize(u_lightDirection.xyz);
+	float nxDir = max(0.0, dot(normal, lightVector));
+	litDiffuse = u_lightAmbient + vec4(u_lightDiffuse.rgb * nxDir, 1.0);
+
+	//Texture Specular
+	vec3 litSpecular = vec3(0.0);
+	float mapSpecular = texture2D(texture2, v_uvCoord).r;
+	vec3 cameraVector = normalize(v_position.xyz - agk_CameraPos);
+	vec3 halfVector = normalize(lightVector + cameraVector);
+	float nxHalf = max(0.0, dot(normal, halfVector));
+	litSpecular += nxDir * u_lightAmbient.rgb * mapSpecular * pow(nxHalf, u_specularPower);
+
+	//Final
+	gl_FragColor = mapDiffuse * vec4(litDiffuse.rgb + litSpecular, 1.0);
+
+}
